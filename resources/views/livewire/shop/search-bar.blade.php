@@ -1,9 +1,4 @@
 <div class="relative" x-data="{ focused: false }">
-    <style>
-        .left-auto {
-            left: auto !important;
-        }
-    </style>
     
     <!-- Search toggle button -->
     <button 
