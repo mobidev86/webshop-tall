@@ -8,6 +8,7 @@ class ShopController extends Controller
 {
     /**
      * Display the shop homepage with product listing.
+     * This now serves as the default homepage.
      */
     public function index()
     {

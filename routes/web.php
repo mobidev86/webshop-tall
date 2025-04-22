@@ -7,6 +7,7 @@ use App\Livewire\Customer\OrderDetail;
 use App\Livewire\Customer\ProfileManagement;
 use Illuminate\Support\Facades\Route;
 
+// Make shop the default homepage
 Route::get('/', [ShopController::class, 'index'])->name('shop.index');
 
 // Customer routes protected by auth middleware
