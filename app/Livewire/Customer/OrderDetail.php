@@ -5,7 +5,9 @@ namespace App\Livewire\Customer;
 use App\Models\Order;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
 
+#[Layout('components.layouts.app')]
 class OrderDetail extends Component
 {
     public Order $order;

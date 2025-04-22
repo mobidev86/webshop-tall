@@ -7,7 +7,9 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Livewire\Attributes\Layout;
 
+#[Layout('components.layouts.app')]
 class OrderManagement extends Component
 {
     use WithPagination;
@@ -16,6 +18,8 @@ class OrderManagement extends Component
     public $status = '';
     public $sort = 'created_at';
     public $sortDirection = 'desc';
+    public $showCancelConfirmation = false;
+    public $selectedOrderId = null;
     
     protected $queryString = [
         'search' => ['except' => ''],
@@ -40,6 +44,46 @@ class OrderManagement extends Component
             $this->sort = $field;
             $this->sortDirection = 'asc';
         }
+    }
+    
+    public function confirmCancel($orderId)
+    {
+        $this->selectedOrderId = $orderId;
+        $this->showCancelConfirmation = true;
+    }
+    
+    public function cancelOrder()
+    {
+        $order = Order::where('id', $this->selectedOrderId)
+            ->where('user_id', Auth::id())
+            ->first();
+            
+        if (!$order) {
+            session()->flash('error', 'Order not found or you do not have permission to cancel it.');
+            $this->showCancelConfirmation = false;
+            return;
+        }
+        
+        // Check if the order can be cancelled
+        if (!$order->canBeCancelled()) {
+            session()->flash('error', 'This order cannot be cancelled.');
+            $this->showCancelConfirmation = false;
+            return;
+        }
+        
+        // Attempt to cancel the order
+        if ($order->cancel()) {
+            session()->flash('success', 'Order has been cancelled successfully.');
+        } else {
+            session()->flash('error', 'Failed to cancel the order. Please try again.');
+        }
+        
+        $this->showCancelConfirmation = false;
+    }
+    
+    public function closeModal()
+    {
+        $this->showCancelConfirmation = false;
     }
     
     public function getOrdersProperty()

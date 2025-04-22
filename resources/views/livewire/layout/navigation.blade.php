@@ -36,9 +36,15 @@ new class extends Component
                     </x-nav-link>
                     
                     @auth
-                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate class="text-sm font-medium">
-                            {{ __('Dashboard') }}
-                        </x-nav-link>
+                        @if(auth()->user()->role === 'admin')
+                            <x-nav-link :href="route('filament.admin.pages.dashboard')" :active="request()->routeIs('filament.admin.pages.dashboard')" class="text-sm font-medium">
+                                {{ __('Admin Dashboard') }}
+                            </x-nav-link>
+                        @elseif(auth()->user()->role === 'customer')
+                            <x-nav-link :href="route('customer.dashboard')" :active="request()->routeIs('customer.dashboard')" wire:navigate class="text-sm font-medium">
+                                {{ __('Dashboard') }}
+                            </x-nav-link>
+                        @endif
                     @endauth
                 </div>
             </div>
@@ -121,9 +127,15 @@ new class extends Component
             </x-responsive-nav-link>
             
             @auth
-                <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" wire:navigate>
-                    {{ __('Dashboard') }}
-                </x-responsive-nav-link>
+                @if(auth()->user()->role === 'admin')
+                    <x-responsive-nav-link :href="route('filament.admin.pages.dashboard')" :active="request()->routeIs('filament.admin.pages.dashboard')">
+                        {{ __('Admin Dashboard') }}
+                    </x-responsive-nav-link>
+                @elseif(auth()->user()->role === 'customer')
+                    <x-responsive-nav-link :href="route('customer.dashboard')" :active="request()->routeIs('customer.dashboard')" wire:navigate>
+                        {{ __('Dashboard') }}
+                    </x-responsive-nav-link>
+                @endif
             @endauth
         </div>
 
