@@ -51,12 +51,8 @@ new class extends Component
 
             <!-- Navigation Right Side -->
             <div class="hidden sm:flex sm:items-center sm:ms-6 space-x-4">
-                <!-- Search Button -->
-                <button class="text-gray-500 hover:text-gray-700 focus:outline-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </button>
+                <!-- Search Component -->
+                <livewire:shop.search-bar />
                 
                 @auth
                     <!-- User Account Dropdown -->
@@ -121,6 +117,36 @@ new class extends Component
 
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': !open}" class="hidden sm:hidden">
+        <!-- Mobile Search -->
+        <div class="pt-2 px-4">
+            <form wire:submit.prevent="$dispatch('search-submitted', {search: $event.target.search.value})">
+                <div class="relative">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <input 
+                        name="search"
+                        type="text" 
+                        class="block w-full rounded-md border-0 py-2 pl-10 pr-16 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" 
+                        placeholder="Search products..."
+                    >
+                    <div class="absolute inset-y-0 right-0 flex py-1.5 pr-1.5">
+                        <button 
+                            type="submit" 
+                            class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700"
+                        >
+                            Search
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-1 text-xs text-gray-500">
+                    Leave empty to show all products
+                </div>
+            </form>
+        </div>
+        
         <div class="pt-2 pb-3 space-y-1">
             <x-responsive-nav-link :href="route('shop.index')" :active="request()->routeIs('shop.index')" wire:navigate>
                 {{ __('Shop') }}

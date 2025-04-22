@@ -7,6 +7,7 @@ use App\Models\Product;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Database\Eloquent\Builder;
+use Livewire\Attributes\On;
 
 class ProductListing extends Component
 {
@@ -17,6 +18,7 @@ class ProductListing extends Component
     public $sortBy = 'name';
     public $sortDirection = 'asc';
     public $perPage = 12;
+    public $searchPlaceholder = 'Search by product name, description, or category...';
     
     protected $queryString = [
         'search' => ['except' => ''],
@@ -25,6 +27,13 @@ class ProductListing extends Component
         'sortDirection' => ['except' => 'asc'],
         'perPage' => ['except' => 12],
     ];
+    
+    #[On('search-submitted')]
+    public function updateSearch($search)
+    {
+        $this->search = $search;
+        $this->resetPage();
+    }
     
     public function updatingSearch()
     {
@@ -60,6 +69,34 @@ class ProductListing extends Component
             ->get();
     }
     
+    public function getNoResultsMessageProperty()
+    {
+        $message = 'No products found';
+        
+        if ($this->search) {
+            $message .= " matching \"" . e($this->search) . "\"";
+        }
+        
+        if ($this->selectedCategory) {
+            $category = Category::find($this->selectedCategory);
+            if ($category) {
+                $message .= " in the \"" . e($category->name) . "\" category";
+            }
+        }
+        
+        return $message;
+    }
+    
+    public function highlightSearchTerm($text)
+    {
+        if (empty($this->search) || empty($text)) {
+            return $text;
+        }
+        
+        $search = preg_quote($this->search, '/');
+        return preg_replace('/(' . $search . ')/i', '<span class="bg-yellow-100 font-semibold">$1</span>', e($text));
+    }
+    
     private function productsQuery(): Builder
     {
         $query = Product::query()
@@ -67,9 +104,16 @@ class ProductListing extends Component
             ->orderBy($this->sortBy, $this->sortDirection);
             
         if ($this->search) {
-            $query->where(function (Builder $query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('description', 'like', '%' . $this->search . '%');
+            $searchTerm = '%' . $this->search . '%';
+            
+            $query->where(function (Builder $query) use ($searchTerm) {
+                // Search in product name and description
+                $query->where('name', 'like', $searchTerm)
+                    ->orWhere('description', 'like', $searchTerm)
+                    // Search in categories
+                    ->orWhereHas('categories', function (Builder $subQuery) use ($searchTerm) {
+                        $subQuery->where('name', 'like', $searchTerm);
+                    });
             });
         }
         
@@ -98,6 +142,7 @@ class ProductListing extends Component
         return view('livewire.shop.product-listing', [
             'products' => $this->products,
             'categories' => $this->categories,
+            'noResultsMessage' => $this->noResultsMessage
         ]);
     }
 }
