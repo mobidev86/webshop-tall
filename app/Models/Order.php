@@ -48,7 +48,7 @@ class Order extends Model
     ];
     
     protected $casts = [
-        'total_amount' => 'decimal:2',
+        'total_amount' => 'float',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -84,14 +84,29 @@ class Order extends Model
     // Method to calculate the total amount from all order items
     public function calculateTotalAmount()
     {
-        $total = 0;
+        // Log the calculation starting
+        \Illuminate\Support\Facades\Log::debug("Calculating total amount for order {$this->order_number}");
         
-        foreach ($this->items as $item) {
-            $total += $item->subtotal;
-        }
+        // Use a direct database query for maximum reliability
+        $total = $this->items()->sum('subtotal');
         
+        // Make sure it's a float
+        $total = (float)$total;
+        
+        // Log the result for debugging
+        \Illuminate\Support\Facades\Log::debug("Order {$this->order_number} total calculated", [
+            'items_count' => $this->items()->count(),
+            'calculated_total' => $total
+        ]);
+        
+        // Update the attribute
         $this->total_amount = $total;
-        $this->save();
+        
+        // Save to database
+        $saved = $this->save();
+        
+        // Log the save result
+        \Illuminate\Support\Facades\Log::debug("Order {$this->order_number} save result: " . ($saved ? 'success' : 'failed'));
         
         return $total;
     }

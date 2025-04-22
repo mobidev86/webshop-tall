@@ -5,10 +5,11 @@ namespace App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource;
 use App\Models\OrderItem;
 use App\Models\Product;
-use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use App\Models\Order;
+use Illuminate\Support\Facades\Log;
 
 class CreateOrder extends CreateRecord
 {
@@ -38,11 +39,6 @@ class CreateOrder extends CreateRecord
         }
         
         $this->data['total_amount'] = number_format($total, 2, '.', '');
-        
-        \Illuminate\Support\Facades\Log::debug("Recalculated total from event", [
-            'total' => $total,
-            'items_count' => count($items)
-        ]);
     }
     
     // Handle saving the order items relationship after the order is created
@@ -51,22 +47,41 @@ class CreateOrder extends CreateRecord
         try {
             DB::beginTransaction();
             
-            // Remove items data from the main order data before creation
+            // Extract order items and calculate total
             $orderItems = $data['items'] ?? [];
             unset($data['items']);
             
-            // Set initial total_amount
-            $data['total_amount'] = 0;
-            
-            // Create the order record
-            $order = static::getModel()::create($data);
-            
-            // Track total amount
-            $totalAmount = 0;
-            
-            // Create order items if they exist
+            // Pre-calculate total from items
+            $calculatedTotal = 0;
             foreach ($orderItems as $itemData) {
-                // Skip if product_id is missing
+                if (!isset($itemData['product_id'])) {
+                    continue;
+                }
+                
+                $product = Product::find($itemData['product_id']);
+                if (!$product) {
+                    continue;
+                }
+                
+                $quantity = max(1, (int)($itemData['quantity'] ?? 1));
+                $price = (float)$product->getCurrentPrice();
+                $calculatedTotal += $price * $quantity;
+            }
+            
+            // Set calculated total
+            $data['total_amount'] = $calculatedTotal > 0 ? $calculatedTotal : (float)($data['total_amount'] ?? 0.00);
+            
+            // Generate order number if not provided
+            if (empty($data['order_number'])) {
+                $data['order_number'] = Order::generateOrderNumber();
+            }
+            
+            // Create order record
+            $order = static::getModel()::create($data);
+            $orderId = $order->id;
+            
+            // Process order items
+            foreach ($orderItems as $itemData) {
                 if (!isset($itemData['product_id'])) {
                     continue;
                 }
@@ -77,24 +92,22 @@ class CreateOrder extends CreateRecord
                     continue;
                 }
                 
-                // Get quantity
+                // Determine quantity (respecting stock limits)
                 $quantity = max(1, (int)($itemData['quantity'] ?? 1));
-                
-                // Check if enough stock is available
                 if ($product->stock < $quantity) {
-                    // Adjust quantity to available stock
-                    $quantity = $product->stock;
+                    $quantity = max(0, $product->stock);
                     if ($quantity <= 0) {
-                        continue; // Skip if no stock available
+                        continue;
                     }
                 }
                 
-                // Always use the product's current price rather than the form input
-                $price = $product->getCurrentPrice();
+                // Use product's current price
+                $price = (float)$product->getCurrentPrice();
                 $subtotal = $price * $quantity;
                 
-                // Create the order item
-                $orderItem = new OrderItem([
+                // Create order item
+                OrderItem::create([
+                    'order_id' => $orderId,
                     'product_id' => $product->id,
                     'product_name' => $product->name,
                     'quantity' => $quantity,
@@ -102,27 +115,32 @@ class CreateOrder extends CreateRecord
                     'subtotal' => $subtotal,
                 ]);
                 
-                $order->items()->save($orderItem);
-                
                 // Update product stock
                 $product->stock -= $quantity;
                 $product->save();
-                
-                // Add to total
-                $totalAmount += $subtotal;
             }
             
-            // Update the order with the calculated total
-            if ($totalAmount > 0) {
-                $order->total_amount = $totalAmount;
-                $order->save();
+            // Get actual total from saved items
+            $finalTotal = OrderItem::where('order_id', $orderId)->sum('subtotal');
+            
+            // Update order total if items were created successfully
+            if ($finalTotal > 0) {
+                DB::table('orders')
+                    ->where('id', $orderId)
+                    ->update(['total_amount' => $finalTotal]);
+                
+                // Update model instance
+                $order->total_amount = $finalTotal;
             }
             
             DB::commit();
-            return $order;
+            
+            // Return fresh model
+            return Order::find($orderId);
+            
         } catch (\Exception $e) {
             DB::rollBack();
-            // Re-throw the exception to show the error in Filament UI
+            Log::error("Error creating order: " . $e->getMessage());
             throw $e;
         }
     }

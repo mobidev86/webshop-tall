@@ -66,6 +66,13 @@ class EditOrder extends EditRecord
         try {
             DB::beginTransaction();
             
+            // Log the incoming data for debugging
+            \Illuminate\Support\Facades\Log::debug("Updating order #{$record->order_number}", [
+                'total_amount' => $data['total_amount'] ?? 'not set',
+                'items_count' => count($data['items'] ?? []),
+                'status' => $data['status'] ?? 'not changed'
+            ]);
+            
             // Remove items data from the main order data before update
             $orderItems = $data['items'] ?? [];
             unset($data['items']);
@@ -75,16 +82,17 @@ class EditOrder extends EditRecord
                 && $data['status'] === 'cancelled' 
                 && $record->status !== 'cancelled';
             
-            // Update the order record (basic information)
+            // Update the basic record data but don't try to update total_amount yet
+            if (isset($data['total_amount'])) {
+                unset($data['total_amount']);
+            }
+            
             $record->update($data);
             
             // Get existing items with products for inventory management
             $existingItems = $record->items()->with('product')->get();
             $existingItemIds = $existingItems->pluck('id')->toArray();
             $updatedItemIds = [];
-            
-            // Track total amount
-            $totalAmount = 0;
             
             // If order is being cancelled, restore stock for all items and skip item processing
             if ($statusChangingToCancelled) {
@@ -204,7 +212,6 @@ class EditOrder extends EditRecord
                         }
                         
                         $updatedItemIds[] = $existingItem->id;
-                        $totalAmount += $existingItem->subtotal;
                         
                     } else {
                         // Handle new item
@@ -241,7 +248,6 @@ class EditOrder extends EditRecord
                         ]);
                         
                         $updatedItemIds[] = $orderItem->id;
-                        $totalAmount += $subtotal;
                     }
                 }
                 
@@ -263,14 +269,43 @@ class EditOrder extends EditRecord
                     ->delete();
             }
             
-            // Update the order total amount
-            $record->total_amount = $totalAmount;
-            $record->save();
+            // Calculate the total amount directly from the database
+            $databaseTotal = $record->items()->sum('subtotal');
+            
+            // Make absolutely sure we're working with a numeric value
+            $finalTotal = (float)$databaseTotal;
+            
+            // Update the total amount using a direct query to ensure it's saved
+            DB::table('orders')
+                ->where('id', $record->id)
+                ->update(['total_amount' => $finalTotal]);
+                
+            // Also update the model instance
+            $record->total_amount = $finalTotal;
+            
+            // Log the final total for debugging
+            \Illuminate\Support\Facades\Log::debug("Order updated with final total", [
+                'order_id' => $record->id,
+                'order_number' => $record->order_number,
+                'database_total' => $databaseTotal,
+                'final_total' => $finalTotal,
+                'items_count' => $record->items()->count()
+            ]);
             
             DB::commit();
+            
+            // Reload the model to ensure it has the correct total
+            $record->refresh();
+            
             return $record;
         } catch (\Exception $e) {
             DB::rollBack();
+            // Log the error for debugging
+            \Illuminate\Support\Facades\Log::error("Error updating order: " . $e->getMessage(), [
+                'order_id' => $record->id,
+                'exception' => get_class($e),
+                'trace' => $e->getTraceAsString()
+            ]);
             throw $e;
         }
     }
