@@ -14,13 +14,7 @@ class Customer extends Model
         'name',
         'email',
         'phone',
-        'address',
-        'city',
-        'state',
-        'zip_code',
-        'country',
         'is_active',
-        'notes',
     ];
 
     protected $casts = [
@@ -33,21 +27,5 @@ class Customer extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
-    }
-
-    /**
-     * Get the customer's full address as a string
-     */
-    public function getFullAddressAttribute(): string
-    {
-        $parts = array_filter([
-            $this->address,
-            $this->city,
-            $this->state,
-            $this->zip_code,
-            $this->country,
-        ]);
-
-        return implode(', ', $parts);
     }
 }

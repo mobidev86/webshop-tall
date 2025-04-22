@@ -65,34 +65,6 @@ class CustomerResource extends Resource
                             ->default(User::ROLE_CUSTOMER),
                     ])
                     ->columns(2),
-                    
-                Forms\Components\Section::make('Address Information')
-                    ->schema([
-                        Forms\Components\TextInput::make('address')
-                            ->maxLength(255),
-                            
-                        Forms\Components\TextInput::make('city')
-                            ->maxLength(255),
-                            
-                        Forms\Components\TextInput::make('state')
-                            ->maxLength(255),
-                            
-                        Forms\Components\TextInput::make('zip_code')
-                            ->maxLength(255),
-                            
-                        Forms\Components\TextInput::make('country')
-                            ->maxLength(255),
-                    ])
-                    ->columns(2)
-                    ->collapsible(),
-                    
-                Forms\Components\Section::make('Additional Information')
-                    ->schema([
-                        Forms\Components\Textarea::make('notes')
-                            ->maxLength(65535)
-                            ->columnSpanFull(),
-                    ])
-                    ->collapsible(),
             ]);
     }
 
@@ -110,14 +82,6 @@ class CustomerResource extends Resource
                     
                 Tables\Columns\TextColumn::make('phone')
                     ->searchable(),
-                    
-                Tables\Columns\TextColumn::make('city')
-                    ->searchable()
-                    ->sortable(),
-                    
-                Tables\Columns\TextColumn::make('country')
-                    ->searchable()
-                    ->sortable(),
                     
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()

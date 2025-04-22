@@ -157,31 +157,6 @@ class ProductOrderForm extends Component
                 $customerUpdated = true;
             }
             
-            if ($this->address && $customer->address !== $this->address) {
-                $customerData['address'] = $this->address;
-                $customerUpdated = true;
-            }
-            
-            if ($this->city && $customer->city !== $this->city) {
-                $customerData['city'] = $this->city;
-                $customerUpdated = true;
-            }
-            
-            if ($this->state && $customer->state !== $this->state) {
-                $customerData['state'] = $this->state;
-                $customerUpdated = true;
-            }
-            
-            if ($this->zip && $customer->zip_code !== $this->zip) {
-                $customerData['zip_code'] = $this->zip;
-                $customerUpdated = true;
-            }
-            
-            if ($this->country && $customer->country !== $this->country) {
-                $customerData['country'] = $this->country;
-                $customerUpdated = true;
-            }
-            
             if ($customerUpdated) {
                 $customer->update($customerData);
             }

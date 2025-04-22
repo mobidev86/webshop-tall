@@ -30,13 +30,7 @@ class User extends Authenticatable
         'password',
         'role',
         'phone',
-        'address',
-        'city',
-        'state',
-        'zip_code',
-        'country',
         'is_active',
-        'notes',
     ];
 
     /**
@@ -85,21 +79,5 @@ class User extends Authenticatable
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
-    }
-
-    /**
-     * Get the user's full address as a string
-     */
-    public function getFullAddressAttribute(): string
-    {
-        $parts = array_filter([
-            $this->address,
-            $this->city,
-            $this->state,
-            $this->zip_code,
-            $this->country,
-        ]);
-
-        return implode(', ', $parts);
     }
 }
