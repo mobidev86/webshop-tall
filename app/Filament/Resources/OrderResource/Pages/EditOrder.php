@@ -14,6 +14,37 @@ class EditOrder extends EditRecord
 {
     protected static string $resource = OrderResource::class;
 
+    // Listen for the recalculate-total event
+    protected $listeners = ['recalculate-total' => 'recalculateTotal'];
+
+    // Method to recalculate the total amount
+    public function recalculateTotal()
+    {
+        $data = $this->data;
+        $items = $data['items'] ?? [];
+        
+        $total = 0;
+        
+        foreach ($items as $item) {
+            $quantity = isset($item['quantity']) && is_numeric($item['quantity']) 
+                ? (int)$item['quantity'] 
+                : 0;
+                
+            $price = isset($item['price']) && is_numeric($item['price']) 
+                ? (float)$item['price'] 
+                : 0;
+                
+            $total += $price * $quantity;
+        }
+        
+        $this->data['total_amount'] = number_format($total, 2, '.', '');
+        
+        \Illuminate\Support\Facades\Log::debug("Recalculated total from event", [
+            'total' => $total,
+            'items_count' => count($items)
+        ]);
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -27,24 +58,6 @@ class EditOrder extends EditRecord
         $this->record->load('items');
         
         return $data;
-    }
-    
-    // Method to recalculate the order total during form interactions
-    public function calculateTotalAmount(): void
-    {
-        $data = $this->data;
-        $items = $data['items'] ?? [];
-        
-        $total = 0;
-        foreach ($items as $item) {
-            if (isset($item['subtotal'])) {
-                $total += floatval($item['subtotal']);
-            } elseif (isset($item['price']) && isset($item['quantity'])) {
-                $total += floatval($item['price']) * intval($item['quantity']);
-            }
-        }
-        
-        $this->data['total_amount'] = number_format($total, 2, '.', '');
     }
     
     // Handle saving the updated order items
@@ -250,8 +263,9 @@ class EditOrder extends EditRecord
                     ->delete();
             }
             
-            // Recalculate total amount
-            $record->calculateTotalAmount();
+            // Update the order total amount
+            $record->total_amount = $totalAmount;
+            $record->save();
             
             DB::commit();
             return $record;

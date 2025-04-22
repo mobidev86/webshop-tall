@@ -96,18 +96,39 @@ class OrderResource extends Resource
                                     ->preload()
                                     ->required()
                                     ->reactive()
-                                    ->afterStateUpdated(function (callable $set, $state) {
+                                    ->afterStateUpdated(function (callable $set, $state, $livewire) {
                                         if ($state) {
                                             $product = Product::find($state);
                                             if ($product) {
+                                                // Get the current price from the product
+                                                $price = (float)$product->getCurrentPrice();
+                                                
+                                                // Set the product details in the form
                                                 $set('product_name', $product->name);
-                                                $set('price', $product->getCurrentPrice());
+                                                $set('price', $price);
                                                 $set('available_stock', $product->stock);
                                                 
-                                                // Also update subtotal whenever product changes
+                                                // Set the initial quantity
                                                 $quantity = 1; // Default quantity
                                                 $set('quantity', $quantity);
-                                                $set('subtotal', $product->getCurrentPrice() * $quantity);
+                                                
+                                                // Calculate and set the subtotal
+                                                $subtotal = $price * $quantity;
+                                                $set('subtotal', $subtotal);
+                                                
+                                                // Log the product selection details
+                                                \Illuminate\Support\Facades\Log::debug("Product selected", [
+                                                    'product_id' => $state,
+                                                    'product_name' => $product->name,
+                                                    'price' => $price,
+                                                    'initial_quantity' => $quantity,
+                                                    'subtotal' => $subtotal
+                                                ]);
+                                                
+                                                // Force a form update to recalculate the total
+                                                if (method_exists($livewire, 'dispatch')) {
+                                                    $livewire->dispatch('recalculate-total');
+                                                }
                                             }
                                         }
                                     }),
@@ -128,19 +149,49 @@ class OrderResource extends Resource
                                     ->minValue(1)
                                     ->required()
                                     ->reactive()
-                                    ->afterStateUpdated(function (callable $set, $state, $get) {
-                                        $price = (float) $get('price');
-                                        $quantity = (int) $state;
-                                        $set('subtotal', $price * $quantity);
+                                    ->afterStateUpdated(function (callable $set, $state, $get, $livewire) {
+                                        // Ensure we have a valid price and quantity
+                                        $price = $get('price');
+                                        $price = (null !== $price && is_numeric($price)) 
+                                            ? (float)$price 
+                                            : 0;
+                                            
+                                        $quantity = (null !== $state && is_numeric($state)) 
+                                            ? (int)$state 
+                                            : 0;
+                                        
+                                        // Calculate the subtotal
+                                        $subtotal = $price * $quantity;
+                                        
+                                        // Set the subtotal back to the form
+                                        $set('subtotal', $subtotal);
+                                        
+                                        // Log the calculation
+                                        \Illuminate\Support\Facades\Log::debug("Quantity change calculation", [
+                                            'price' => $price,
+                                            'quantity' => $quantity,
+                                            'subtotal' => $subtotal,
+                                            'product_id' => $get('product_id')
+                                        ]);
                                         
                                         // Validate against available stock
                                         $productId = $get('product_id');
                                         if ($productId) {
                                             $product = Product::find($productId);
                                             if ($product && $quantity > $product->stock) {
-                                                $set('quantity', $product->stock);
-                                                $set('subtotal', $price * $product->stock);
+                                                // Adjust quantity to available stock
+                                                $quantity = $product->stock;
+                                                $set('quantity', $quantity);
+                                                
+                                                // Recalculate subtotal
+                                                $subtotal = $price * $quantity;
+                                                $set('subtotal', $subtotal);
                                             }
+                                        }
+                                        
+                                        // Force a form update to recalculate the total
+                                        if (method_exists($livewire, 'dispatch')) {
+                                            $livewire->dispatch('recalculate-total');
                                         }
                                     }),
                                 
@@ -163,23 +214,9 @@ class OrderResource extends Resource
                             ->deleteAction(
                                 fn (Forms\Components\Actions\Action $action) => $action->requiresConfirmation(),
                             )
-                            ->afterStateUpdated(function ($state, callable $get, callable $set, ?Order $record = null) {
-                                if ($record) {
-                                    // Recalculate total after items are updated
-                                    $record->calculateTotalAmount();
-                                    $set('total_amount', $record->total_amount);
-                                } else {
-                                    // For new orders, calculate the total here
-                                    $total = 0;
-                                    if (is_array($state)) {
-                                        foreach ($state as $item) {
-                                            if (isset($item['price']) && isset($item['quantity'])) {
-                                                $total += (float) $item['price'] * (int) $item['quantity'];
-                                            }
-                                        }
-                                    }
-                                    $set('total_amount', $total);
-                                }
+                            ->reactive()
+                            ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set) {
+                                self::calculateOrderTotal($get, $set);
                             }),
                     ]),
             ]);
@@ -306,5 +343,76 @@ class OrderResource extends Resource
             'create' => Pages\CreateOrder::route('/create'),
             'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
+    }
+
+    /**
+     * Calculate the total amount from all order items
+     * 
+     * @param Forms\Get $get The Filament form's Get object
+     * @param Forms\Set $set The Filament form's Set object
+     * @return float The calculated total amount
+     */
+    private static function calculateOrderTotal(Forms\Get $get, Forms\Set $set): float
+    {
+        // Get all items
+        $items = $get('items');
+        
+        // Start with zero total
+        $total = 0;
+        
+        // Calculate total from all items
+        if (is_array($items)) {
+            $itemDetails = [];
+            
+            foreach ($items as $index => $item) {
+                // Get quantity and price, with safe defaults
+                $quantity = 0;
+                if (array_key_exists('quantity', $item) && is_numeric($item['quantity'])) {
+                    $quantity = (int)$item['quantity'];
+                }
+                    
+                $price = 0;
+                if (array_key_exists('price', $item) && is_numeric($item['price'])) {
+                    $price = (float)$item['price'];
+                }
+                
+                // Calculate this item's subtotal
+                $itemTotal = $price * $quantity;
+                
+                // Add to the running total
+                $total += $itemTotal;
+                
+                // Collect details for logging
+                $itemDetails[] = [
+                    'index' => $index,
+                    'product_id' => $item['product_id'] ?? null,
+                    'product_name' => $item['product_name'] ?? null,
+                    'price' => $price,
+                    'quantity' => $quantity,
+                    'item_total' => $itemTotal
+                ];
+            }
+            
+            // Log the calculation details
+            \Illuminate\Support\Facades\Log::debug("Order total calculation details", [
+                'items' => $itemDetails,
+                'total' => $total
+            ]);
+        }
+        
+        // Format the total amount to 2 decimal places
+        $formattedTotal = number_format($total, 2, '.', '');
+        
+        // Log the final total
+        \Illuminate\Support\Facades\Log::debug("Order total calculation result", [
+            'raw_total' => $total,
+            'formatted_total' => $formattedTotal,
+            'items_count' => count($items ?? [])
+        ]);
+        
+        // Update the total_amount field with the formatted total
+        $set('total_amount', $formattedTotal);
+        
+        return $total;
     }
 }

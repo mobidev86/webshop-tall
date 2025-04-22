@@ -81,11 +81,18 @@ class Order extends Model
         return $this->items()->sum('quantity');
     }
     
-    // Calculate total amount from order items
+    // Method to calculate the total amount from all order items
     public function calculateTotalAmount()
     {
-        $total = $this->items()->sum('subtotal');
-        $this->update(['total_amount' => $total]);
+        $total = 0;
+        
+        foreach ($this->items as $item) {
+            $total += $item->subtotal;
+        }
+        
+        $this->total_amount = $total;
+        $this->save();
+        
         return $total;
     }
     

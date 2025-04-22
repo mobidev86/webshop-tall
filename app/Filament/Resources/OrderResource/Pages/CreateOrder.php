@@ -14,22 +14,35 @@ class CreateOrder extends CreateRecord
 {
     protected static string $resource = OrderResource::class;
     
-    // Method to recalculate the order total during form interactions
-    public function calculateTotalAmount(): void
+    // Listen for the recalculate-total event
+    protected $listeners = ['recalculate-total' => 'recalculateTotal'];
+    
+    // Method to recalculate the total amount
+    public function recalculateTotal()
     {
         $data = $this->data;
         $items = $data['items'] ?? [];
         
         $total = 0;
+        
         foreach ($items as $item) {
-            if (isset($item['subtotal'])) {
-                $total += floatval($item['subtotal']);
-            } elseif (isset($item['price']) && isset($item['quantity'])) {
-                $total += floatval($item['price']) * intval($item['quantity']);
-            }
+            $quantity = isset($item['quantity']) && is_numeric($item['quantity']) 
+                ? (int)$item['quantity'] 
+                : 0;
+                
+            $price = isset($item['price']) && is_numeric($item['price']) 
+                ? (float)$item['price'] 
+                : 0;
+                
+            $total += $price * $quantity;
         }
         
         $this->data['total_amount'] = number_format($total, 2, '.', '');
+        
+        \Illuminate\Support\Facades\Log::debug("Recalculated total from event", [
+            'total' => $total,
+            'items_count' => count($items)
+        ]);
     }
     
     // Handle saving the order items relationship after the order is created
