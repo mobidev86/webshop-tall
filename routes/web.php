@@ -7,9 +7,7 @@ use App\Livewire\Customer\OrderDetail;
 use App\Livewire\Customer\ProfileManagement;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/', 'welcome');
-
-Route::get('/shop', [ShopController::class, 'index'])->name('shop.index');
+Route::get('/', [ShopController::class, 'index'])->name('shop.index');
 
 // Customer routes protected by auth middleware
 Route::middleware(['auth', 'verified'])->group(function () {
