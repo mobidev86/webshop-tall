@@ -15,7 +15,7 @@
                             </svg>
                         </div>
                         <input 
-                            wire:model.live.debounce.150ms="search" 
+                            wire:model.live.debounce.300ms="search" 
                             type="text" 
                             class="block w-full rounded-md border-0 py-3 pl-11 pr-20 text-gray-900 ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-slate-600 sm:text-md shadow-sm"
                             placeholder="{{ $searchPlaceholder }}"
@@ -94,7 +94,7 @@
                         </div>
                         
                         <button 
-                            wire:click="$set('sortDirection', '{{ $sortDirection === 'asc' ? 'desc' : 'asc' }}')" 
+                            wire:click="toggleSortDirection" 
                             type="button" 
                             class="p-1.5 text-gray-600 hover:text-gray-800 bg-white rounded-md border border-gray-200 shadow-sm transition duration-150 hover:border-gray-300"
                         >
@@ -173,7 +173,7 @@
                             @if($products->count())
                                 <div class="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-10">
                                     @foreach($products as $product)
-                                        <div class="group relative bg-white overflow-hidden rounded-md shadow-sm transition-all duration-300 hover:shadow-md border border-gray-100">
+                                        <div wire:key="product-{{ $product->id }}" class="group relative bg-white overflow-hidden rounded-md shadow-sm transition-all duration-300 hover:shadow-md border border-gray-100">
                                             <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden bg-gray-50 xl:aspect-h-8 xl:aspect-w-7">
                                                 @if($product->image)
                                                     <img src="{{ $product->image }}" alt="{{ $product->name }}" class="h-56 w-full object-cover object-center group-hover:scale-105 transition-transform duration-700">

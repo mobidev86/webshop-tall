@@ -7,35 +7,28 @@ use App\Models\Product;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Database\Eloquent\Builder;
-use Livewire\Attributes\On;
-use Livewire\Attributes\Url;
+use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Cache;
 
 class ProductListing extends Component
 {
     use WithPagination;
     
-    // Removing Url attribute to make search work through AJAX without URL parameters
+    // Using public properties with proper type declarations
     public string $search = '';
-    
-    /**
-     * Selected category ID (integer) or null for all categories
-     * @var int|null
-     */
-    // Removing Url attribute to make category filter work through AJAX without URL parameters
     public ?int $selectedCategory = null;
-    
-    // Keep Url attributes for sorting since they're less frequently changed
-    #[Url]
     public string $sortBy = 'name';
-    
-    #[Url]
     public string $sortDirection = 'asc';
-    
     public int $perPage = 12;
     public string $searchPlaceholder = 'Search by product name, description, or category...';
-    public bool $isSearching = false;
-    public bool $isFilteringCategory = false;
+    
+    // Track component state for better UX
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'selectedCategory' => ['except' => null],
+        'sortBy' => ['except' => 'name'],
+        'sortDirection' => ['except' => 'asc']
+    ];
     
     /**
      * Initialize the component
@@ -46,11 +39,35 @@ class ProductListing extends Component
     }
     
     /**
-     * Called after the component is hydrated but before an action is performed
+     * Reset pagination when search is updated
      */
-    public function hydrate(): void
+    public function updatedSearch(): void
     {
-        $this->normalizeSelectedCategory();
+        $this->resetPage();
+    }
+    
+    /**
+     * Reset pagination when category is updated
+     */
+    public function updatedSelectedCategory(): void
+    {
+        $this->resetPage();
+    }
+    
+    /**
+     * Reset pagination when sort parameters change
+     */
+    public function updatedSortBy(): void
+    {
+        $this->resetPage();
+    }
+    
+    /**
+     * Reset pagination when sort direction changes
+     */
+    public function updatedSortDirection(): void
+    {
+        $this->resetPage();
     }
     
     /**
@@ -65,64 +82,70 @@ class ProductListing extends Component
         }
     }
     
-    #[On('search-submitted')]
-    public function updateSearch(string $search): void
+    /**
+     * Select a category for filtering
+     */
+    public function selectCategory($categoryId): void
     {
-        $this->search = $search;
+        $this->selectedCategory = is_numeric($categoryId) ? (int)$categoryId : null;
         $this->resetPage();
     }
     
-    public function updatingSearch(): void
+    /**
+     * Clear category filter
+     */
+    public function clearCategory(): void
     {
-        $this->isSearching = true;
+        $this->selectedCategory = null;
         $this->resetPage();
     }
     
-    public function updatedSearch(): void
+    /**
+     * Update the sort direction
+     */
+    public function toggleSortDirection(): void
     {
-        $this->isSearching = false;
-    }
-    
-    public function updatingSelectedCategory(): void
-    {
-        // Set filtering flag for UI feedback
-        $this->isFilteringCategory = true;
+        $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         $this->resetPage();
     }
     
-    public function updatedSelectedCategory(): void
+    /**
+     * Reset all filters and sorting options
+     */
+    public function resetFilters(): void
     {
-        $this->isFilteringCategory = false;
+        $this->reset(['search', 'selectedCategory', 'sortBy', 'sortDirection']);
+        $this->resetPage();
     }
     
-    public function sortBy(string $field): void
+    /**
+     * Get computed property for products
+     */
+    #[Computed]
+    public function products()
     {
-        if ($this->sortBy === $field) {
-            $this->set('sortDirection', $this->sortDirection === 'asc' ? 'desc' : 'asc');
-        } else {
-            $this->set('sortDirection', 'asc');
-        }
-        
-        $this->set('sortBy', $field);
+        return $this->productsQuery()->paginate($this->perPage);
     }
     
-    public function getProductsProperty()
+    /**
+     * Get computed property for categories
+     */
+    #[Computed]
+    public function categories()
     {
-        return $this->productsQuery()
-            ->paginate($this->perPage);
-    }
-    
-    public function getCategoriesProperty()
-    {
-        // Add cache with 10-minute timeout for categories list
         return Cache::remember('active-categories', 600, function () {
             return Category::where('is_active', true)
+                ->withCount('products')
                 ->orderBy('name')
                 ->get();
         });
     }
     
-    public function getNoResultsMessageProperty(): string
+    /**
+     * Get computed property for no results message
+     */
+    #[Computed]
+    public function noResultsMessage(): string
     {
         $message = 'No products found';
         
@@ -140,117 +163,54 @@ class ProductListing extends Component
         return $message;
     }
     
+    /**
+     * Highlight search terms in product names
+     */
     public function highlightSearchTerm(string $text): string
     {
         if (empty($this->search) || empty($text)) {
-            return $text;
+            return e($text);
         }
         
         $search = preg_quote($this->search, '/');
         return preg_replace('/(' . $search . ')/i', '<span class="bg-yellow-100 font-semibold">$1</span>', e($text));
     }
     
+    /**
+     * Build query for products based on filters
+     */
     private function productsQuery(): Builder
     {
         $query = Product::query()
             ->where('is_active', true);
             
-        // Apply search filter (no min character limit)
+        // Apply search filter
         if ($this->search !== '') {
             $searchTerm = '%' . $this->search . '%';
             
             $query->where(function (Builder $query) use ($searchTerm) {
-                // Search in product name and description
                 $query->where('name', 'like', $searchTerm)
                     ->orWhere('description', 'like', $searchTerm)
-                    // Search in categories
                     ->orWhereHas('categories', function (Builder $subQuery) use ($searchTerm) {
                         $subQuery->where('name', 'like', $searchTerm);
                     });
             });
         }
         
-        // Only apply category filter if a valid category is selected
+        // Apply category filter
         if ($this->selectedCategory) {
-            $categoryIds = $this->getCategoryIdsForFilter($this->selectedCategory);
-            
-            if (!empty($categoryIds)) {
-                $query->whereHas('categories', function (Builder $query) use ($categoryIds) {
-                    $query->whereIn('categories.id', $categoryIds);
-                });
-            }
+            $query->whereHas('categories', function (Builder $query) {
+                $query->where('categories.id', $this->selectedCategory);
+            });
         }
         
-        // Apply sorting after all filters
+        // Apply sorting
         return $query->orderBy($this->sortBy, $this->sortDirection);
     }
     
     /**
-     * Get an array of category IDs to filter by, including descendants
+     * Render the component
      */
-    private function getCategoryIdsForFilter(int $categoryId): array
-    {
-        // Cache category IDs for 5 minutes
-        return Cache::remember("category-ids-{$categoryId}", 300, function () use ($categoryId) {
-            $category = Category::find($categoryId);
-            
-            if (!$category) {
-                return [];
-            }
-            
-            $categoryIds = [$category->id];
-            $descendants = $category->getAllDescendants();
-            
-            if ($descendants->count() > 0) {
-                $categoryIds = array_merge($categoryIds, $descendants->pluck('id')->toArray());
-            }
-            
-            return $categoryIds;
-        });
-    }
-    
-    /**
-     * Set the selected category and reset pagination
-     */
-    public function selectCategory($categoryId): void
-    {
-        // Convert to integer if numeric
-        $this->selectedCategory = is_numeric($categoryId) ? (int)$categoryId : $categoryId;
-        $this->resetPage();
-    }
-    
-    /**
-     * Clear the selected category and reset pagination
-     */
-    public function clearCategory(): void
-    {
-        // Force type conversion to ensure proper null/empty state
-        $this->selectedCategory = null;
-        
-        // Reset page to avoid pagination issues
-        $this->resetPage();
-    }
-    
-    /**
-     * Toggle sort direction between asc and desc
-     */
-    public function toggleSortDirection(): void
-    {
-        $this->set('sortDirection', $this->sortDirection === 'asc' ? 'desc' : 'asc');
-        $this->resetPage();
-    }
-    
-    /**
-     * Reset all filters and refresh the component
-     */
-    public function resetFilters()
-    {
-        // Reset all filterable properties
-        $this->reset(['selectedCategory', 'search', 'sortBy', 'sortDirection']);
-        $this->resetPage();
-        // No redirect needed for AJAX operation
-    }
-    
     public function render()
     {
         return view('livewire.shop.product-listing', [
