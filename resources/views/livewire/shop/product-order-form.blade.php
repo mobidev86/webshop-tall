@@ -126,10 +126,45 @@
         </div>
     @else
         @if(Auth::check())
+            <div class="mt-4">
+                <div class="flex items-center justify-between">
+                    <label for="product-quantity-{{ $product->id }}" class="block text-sm font-medium text-gray-700">Quantity</label>
+                    <span class="text-sm text-gray-500">{{ $product->stock }} available</span>
+                </div>
+                <div class="mt-1 flex rounded-md shadow-sm">
+                    <button 
+                        type="button"
+                        wire:click="decrementQuantity"
+                        class="relative inline-flex items-center gap-x-1.5 rounded-l-md px-2 py-1.5 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        @if(!$product->isInStock()) disabled @endif
+                    >
+                        -
+                    </button>
+                    <input 
+                        type="number" 
+                        wire:model.live="quantity" 
+                        id="product-quantity-{{ $product->id }}"
+                        min="1"
+                        max="{{ $product->stock }}"
+                        class="block w-full border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 sm:text-sm sm:leading-6 text-center"
+                        @if(!$product->isInStock()) disabled @endif
+                    >
+                    <button 
+                        type="button"
+                        wire:click="incrementQuantity"
+                        class="relative inline-flex items-center gap-x-1.5 rounded-r-md px-2 py-1.5 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        @if(!$product->isInStock()) disabled @endif
+                    >
+                        +
+                    </button>
+                </div>
+                @error('quantity') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+            </div>
+            
             <button 
                 wire:click="directOrder"
                 type="button"
-                class="mt-2 w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="mt-3 w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 @if(!$product->isInStock()) disabled @endif
                 wire:loading.attr="disabled"
                 wire:loading.class="opacity-50 cursor-not-allowed"
@@ -143,11 +178,6 @@
                 </span>
                 <span wire:loading wire:target="directOrder">Processing...</span>
             </button>
-            <div class="text-xs text-gray-500 mt-1 text-center">
-                <button wire:click="toggleForm" type="button" class="text-indigo-600 hover:text-indigo-800">
-                    Adjust quantity
-                </button>
-            </div>
         @else
             <button 
                 wire:click="toggleForm"

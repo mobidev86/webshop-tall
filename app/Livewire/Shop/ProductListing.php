@@ -150,13 +150,15 @@ class ProductListing extends Component
         $message = 'No products found';
         
         if ($this->search) {
-            $message .= " matching \"" . e($this->search) . "\"";
+            $message .= " matching \"" . htmlspecialchars($this->search, ENT_QUOTES, 'UTF-8') . "\"";
         }
         
         if ($this->selectedCategory) {
             $category = Category::find($this->selectedCategory);
             if ($category) {
-                $message .= " in the \"" . e($category->name) . "\" category";
+                // Use htmlspecialchars_decode to convert any HTML entities back to their character equivalents
+                $categoryName = htmlspecialchars_decode($category->name);
+                $message .= " in the \"" . $categoryName . "\" category";
             }
         }
         
