@@ -38,11 +38,6 @@ class EditOrder extends EditRecord
         }
         
         $this->data['total_amount'] = number_format($total, 2, '.', '');
-        
-        \Illuminate\Support\Facades\Log::debug("Recalculated total from event", [
-            'total' => $total,
-            'items_count' => count($items)
-        ]);
     }
 
     protected function getHeaderActions(): array
@@ -65,13 +60,6 @@ class EditOrder extends EditRecord
     {
         try {
             DB::beginTransaction();
-            
-            // Log the incoming data for debugging
-            \Illuminate\Support\Facades\Log::debug("Updating order #{$record->order_number}", [
-                'total_amount' => $data['total_amount'] ?? 'not set',
-                'items_count' => count($data['items'] ?? []),
-                'status' => $data['status'] ?? 'not changed'
-            ]);
             
             // Remove items data from the main order data before update
             $orderItems = $data['items'] ?? [];
@@ -282,15 +270,6 @@ class EditOrder extends EditRecord
                 
             // Also update the model instance
             $record->total_amount = $finalTotal;
-            
-            // Log the final total for debugging
-            \Illuminate\Support\Facades\Log::debug("Order updated with final total", [
-                'order_id' => $record->id,
-                'order_number' => $record->order_number,
-                'database_total' => $databaseTotal,
-                'final_total' => $finalTotal,
-                'items_count' => $record->items()->count()
-            ]);
             
             DB::commit();
             

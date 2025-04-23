@@ -57,13 +57,14 @@ class OrdersRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        Order::STATUS_PENDING => 'gray',
-                        Order::STATUS_PROCESSING => 'blue',
-                        Order::STATUS_COMPLETED => 'green',
-                        Order::STATUS_DECLINED => 'red',
-                        Order::STATUS_CANCELLED => 'orange',
+                        Order::STATUS_PENDING => 'warning',
+                        Order::STATUS_PROCESSING => 'info',
+                        Order::STATUS_COMPLETED => 'success',
+                        Order::STATUS_DECLINED => 'danger',
+                        Order::STATUS_CANCELLED => 'gray',
                         default => 'gray',
                     })
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('total_amount')

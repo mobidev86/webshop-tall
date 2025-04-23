@@ -65,5 +65,6 @@ class Kernel extends HttpKernel
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'admin' => \App\Http\Middleware\AdminAccessMiddleware::class, // Register our admin middleware
         'customer' => \App\Http\Middleware\CustomerAccessMiddleware::class, // Register our customer middleware
+        'admin.profile.restrict' => \App\Http\Middleware\AdminProfileRestrictMiddleware::class, // Middleware to restrict admin users from profile page
     ];
 } 

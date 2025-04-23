@@ -116,15 +116,6 @@ class OrderResource extends Resource
                                                 $subtotal = $price * $quantity;
                                                 $set('subtotal', $subtotal);
                                                 
-                                                // Log the product selection details
-                                                \Illuminate\Support\Facades\Log::debug("Product selected", [
-                                                    'product_id' => $state,
-                                                    'product_name' => $product->name,
-                                                    'price' => $price,
-                                                    'initial_quantity' => $quantity,
-                                                    'subtotal' => $subtotal
-                                                ]);
-                                                
                                                 // Force a form update to recalculate the total
                                                 if (method_exists($livewire, 'dispatch')) {
                                                     $livewire->dispatch('recalculate-total');
@@ -165,14 +156,6 @@ class OrderResource extends Resource
                                         
                                         // Set the subtotal back to the form
                                         $set('subtotal', $subtotal);
-                                        
-                                        // Log the calculation
-                                        \Illuminate\Support\Facades\Log::debug("Quantity change calculation", [
-                                            'price' => $price,
-                                            'quantity' => $quantity,
-                                            'subtotal' => $subtotal,
-                                            'product_id' => $get('product_id')
-                                        ]);
                                         
                                         // Validate against available stock
                                         $productId = $get('product_id');
@@ -239,11 +222,12 @@ class OrderResource extends Resource
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         Order::STATUS_PENDING => 'gray',
-                        Order::STATUS_PROCESSING => 'blue',
-                        Order::STATUS_COMPLETED => 'green',
-                        Order::STATUS_DECLINED => 'red',
-                        Order::STATUS_CANCELLED => 'orange',
+                        Order::STATUS_PROCESSING => 'info',
+                        Order::STATUS_COMPLETED => 'success',
+                        Order::STATUS_DECLINED => 'warning',
+                        Order::STATUS_CANCELLED => 'danger',
                     })
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('items_count')
@@ -362,8 +346,6 @@ class OrderResource extends Resource
         
         // Calculate total from all items
         if (is_array($items)) {
-            $itemDetails = [];
-            
             foreach ($items as $index => $item) {
                 // Get quantity and price, with safe defaults
                 $quantity = 0;
@@ -381,34 +363,11 @@ class OrderResource extends Resource
                 
                 // Add to the running total
                 $total += $itemTotal;
-                
-                // Collect details for logging
-                $itemDetails[] = [
-                    'index' => $index,
-                    'product_id' => $item['product_id'] ?? null,
-                    'product_name' => $item['product_name'] ?? null,
-                    'price' => $price,
-                    'quantity' => $quantity,
-                    'item_total' => $itemTotal
-                ];
             }
-            
-            // Log the calculation details
-            \Illuminate\Support\Facades\Log::debug("Order total calculation details", [
-                'items' => $itemDetails,
-                'total' => $total
-            ]);
         }
         
         // Format the total amount to 2 decimal places
         $formattedTotal = number_format($total, 2, '.', '');
-        
-        // Log the final total
-        \Illuminate\Support\Facades\Log::debug("Order total calculation result", [
-            'raw_total' => $total,
-            'formatted_total' => $formattedTotal,
-            'items_count' => count($items ?? [])
-        ]);
         
         // Update the total_amount field with the formatted total
         $set('total_amount', $formattedTotal);

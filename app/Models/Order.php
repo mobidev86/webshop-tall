@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
@@ -84,31 +85,21 @@ class Order extends Model
     // Method to calculate the total amount from all order items
     public function calculateTotalAmount()
     {
-        // Log the calculation starting
-        \Illuminate\Support\Facades\Log::debug("Calculating total amount for order {$this->order_number}");
+        // Method to calculate the total amount from all order items
         
         // Use a direct database query for maximum reliability
-        $total = $this->items()->sum('subtotal');
+        $databaseTotal = $this->items()->sum(DB::raw('price * quantity'));
         
         // Make sure it's a float
-        $total = (float)$total;
-        
-        // Log the result for debugging
-        \Illuminate\Support\Facades\Log::debug("Order {$this->order_number} total calculated", [
-            'items_count' => $this->items()->count(),
-            'calculated_total' => $total
-        ]);
+        $databaseTotal = (float) $databaseTotal;
         
         // Update the attribute
-        $this->total_amount = $total;
+        $this->total_amount = $databaseTotal;
         
         // Save to database
         $saved = $this->save();
         
-        // Log the save result
-        \Illuminate\Support\Facades\Log::debug("Order {$this->order_number} save result: " . ($saved ? 'success' : 'failed'));
-        
-        return $total;
+        return $databaseTotal;
     }
     
     // Check if the order can be cancelled

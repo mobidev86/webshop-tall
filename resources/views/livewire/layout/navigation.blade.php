@@ -80,9 +80,11 @@ new class extends Component
                              x-transition:leave-end="transform opacity-0 scale-95" 
                              class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg">
                             <div class="py-1 rounded-md bg-white shadow-xs">
+                                @if(!Auth::user()->isAdmin())
                                 <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150 ease-in-out" wire:navigate>
                                     Your Profile
                                 </a>
+                                @endif
                                 <button wire:click="logout" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150 ease-in-out">
                                     Sign out
                                 </button>
@@ -172,9 +174,11 @@ new class extends Component
                 </div>
 
                 <div class="mt-3 space-y-1">
+                    @if(!Auth::user()->isAdmin())
                     <x-responsive-nav-link :href="route('profile')" wire:navigate>
                         {{ __('Profile') }}
                     </x-responsive-nav-link>
+                    @endif
 
                     <!-- Authentication -->
                     <button wire:click="logout" class="w-full text-start">
