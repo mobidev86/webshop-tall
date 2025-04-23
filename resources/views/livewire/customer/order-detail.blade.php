@@ -1,7 +1,7 @@
 <div class="py-12">
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <div class="mb-4 flex justify-between items-center">
-            <a href="{{ route('customer.orders') }}" class="inline-flex items-center text-sm text-gray-600 hover:text-indigo-600">
+            <a href="{{ route('customer.orders') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 border border-transparent rounded-md font-medium text-sm text-gray-800 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
@@ -11,8 +11,11 @@
             @if($order->canBeCancelled())
                 <button 
                     wire:click="confirmCancel" 
-                    class="text-red-600 hover:text-red-800 text-sm"
+                    class="inline-flex items-center px-4 py-2 bg-red-100 border border-transparent rounded-md font-medium text-sm text-red-800 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                     Cancel Order
                 </button>
             @endif
