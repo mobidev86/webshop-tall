@@ -16,8 +16,16 @@ class User extends Authenticatable
     /**
      * Role constants
      */
-    const ROLE_ADMIN = 'admin';
-    const ROLE_CUSTOMER = 'customer';
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_CUSTOMER = 'customer';
+    
+    /**
+     * Valid user roles
+     */
+    public const VALID_ROLES = [
+        self::ROLE_ADMIN,
+        self::ROLE_CUSTOMER,
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -31,6 +39,11 @@ class User extends Authenticatable
         'role',
         'phone',
         'is_active',
+        'address',
+        'city',
+        'state',
+        'zip_code',
+        'country',
     ];
 
     /**
@@ -44,18 +57,15 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
+     * The attributes that should be cast.
      *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_active' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_active' => 'boolean',
+    ];
 
     /**
      * Check if user is admin
@@ -79,5 +89,45 @@ class User extends Authenticatable
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+    
+    /**
+     * Get user's full address as a string
+     */
+    public function getFullAddress(): string
+    {
+        $parts = array_filter([
+            $this->address,
+            $this->city,
+            $this->state,
+            $this->zip_code,
+            $this->country
+        ]);
+        
+        return implode(', ', $parts);
+    }
+    
+    /**
+     * Scope query to only include active users
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+    
+    /**
+     * Scope query to only include admin users
+     */
+    public function scopeAdmins($query)
+    {
+        return $query->where('role', self::ROLE_ADMIN);
+    }
+    
+    /**
+     * Scope query to only include customer users
+     */
+    public function scopeCustomers($query)
+    {
+        return $query->where('role', self::ROLE_CUSTOMER);
     }
 }

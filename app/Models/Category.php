@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class Category extends Model
 {
@@ -21,30 +23,47 @@ class Category extends Model
         'is_active',
     ];
     
-    // Relationship with parent category
+    protected $casts = [
+        'is_active' => 'boolean',
+        'parent_id' => 'integer',
+    ];
+    
+    /**
+     * Relationship with parent category
+     */
     public function parent(): BelongsTo
     {
         return $this->belongsTo(Category::class, 'parent_id');
     }
     
-    // Relationship with child categories
+    /**
+     * Relationship with child categories
+     */
     public function children(): HasMany
     {
         return $this->hasMany(Category::class, 'parent_id');
     }
     
-    // Relationship with products (BelongsToMany)
+    /**
+     * Relationship with products (BelongsToMany)
+     */
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class);
     }
     
-    // Helper method to get all active categories
-    public static function getActive()
+    /**
+     * Helper method to get all active categories
+     * 
+     * @return Collection
+     */
+    public static function getActive(): Collection
     {
-        return static::where('is_active', true)->get();
+        return Cache::remember('categories-active', 3600, function () {
+            return static::where('is_active', true)->orderBy('name')->get();
+        });
     }
-
+    
     /**
      * Get all descendants (nested subcategories) recursively
      * 
@@ -53,22 +72,26 @@ class Category extends Model
      */
     public function getAllDescendants(bool $activeOnly = false): Collection
     {
-        $descendants = collect();
+        $cacheKey = "category-{$this->id}-descendants" . ($activeOnly ? '-active' : '');
         
-        // Get immediate children
-        $children = $activeOnly 
-            ? $this->children()->where('is_active', true)->get() 
-            : $this->children()->get();
-        
-        // Add immediate children to descendants
-        $descendants = $descendants->merge($children);
-        
-        // Recursively add children's descendants
-        foreach ($children as $child) {
-            $descendants = $descendants->merge($child->getAllDescendants($activeOnly));
-        }
-        
-        return $descendants;
+        return Cache::remember($cacheKey, 3600, function () use ($activeOnly) {
+            $descendants = collect();
+            
+            // Get immediate children
+            $children = $activeOnly 
+                ? $this->children()->where('is_active', true)->get() 
+                : $this->children()->get();
+            
+            // Add immediate children to descendants
+            $descendants = $descendants->merge($children);
+            
+            // Recursively add children's descendants
+            foreach ($children as $child) {
+                $descendants = $descendants->merge($child->getAllDescendants($activeOnly));
+            }
+            
+            return $descendants;
+        });
     }
     
     /**
@@ -79,18 +102,22 @@ class Category extends Model
      */
     public function getAllAncestors(bool $activeOnly = false): Collection
     {
-        $ancestors = collect();
+        $cacheKey = "category-{$this->id}-ancestors" . ($activeOnly ? '-active' : '');
         
-        $parent = $activeOnly 
-            ? $this->parent()->where('is_active', true)->first() 
-            : $this->parent;
+        return Cache::remember($cacheKey, 3600, function () use ($activeOnly) {
+            $ancestors = collect();
             
-        if ($parent) {
-            $ancestors->push($parent);
-            $ancestors = $ancestors->merge($parent->getAllAncestors($activeOnly));
-        }
-        
-        return $ancestors;
+            $parent = $activeOnly 
+                ? $this->parent()->where('is_active', true)->first() 
+                : $this->parent;
+                
+            if ($parent) {
+                $ancestors->push($parent);
+                $ancestors = $ancestors->merge($parent->getAllAncestors($activeOnly));
+            }
+            
+            return $ancestors;
+        });
     }
     
     /**
@@ -112,18 +139,22 @@ class Category extends Model
      */
     public function getNestedTree(bool $activeOnly = false): array
     {
-        $children = $activeOnly 
-            ? $this->children()->where('is_active', true)->get() 
-            : $this->children()->get();
+        $cacheKey = "category-{$this->id}-tree" . ($activeOnly ? '-active' : '');
+        
+        return Cache::remember($cacheKey, 3600, function () use ($activeOnly) {
+            $children = $activeOnly 
+                ? $this->children()->where('is_active', true)->get() 
+                : $this->children()->get();
+                
+            $result = $this->toArray();
+            $result['children'] = [];
             
-        $result = $this->toArray();
-        $result['children'] = [];
-        
-        foreach ($children as $child) {
-            $result['children'][] = $child->getNestedTree($activeOnly);
-        }
-        
-        return $result;
+            foreach ($children as $child) {
+                $result['children'][] = $child->getNestedTree($activeOnly);
+            }
+            
+            return $result;
+        });
     }
     
     /**
@@ -134,12 +165,78 @@ class Category extends Model
      */
     public static function getRootCategories(bool $activeOnly = false): Collection
     {
-        $query = static::whereNull('parent_id');
+        $cacheKey = 'categories-root' . ($activeOnly ? '-active' : '');
         
-        if ($activeOnly) {
-            $query->where('is_active', true);
-        }
+        return Cache::remember($cacheKey, 3600, function () use ($activeOnly) {
+            $query = static::whereNull('parent_id')->orderBy('name');
+            
+            if ($activeOnly) {
+                $query->where('is_active', true);
+            }
+            
+            return $query->get();
+        });
+    }
+    
+    /**
+     * Scope query to only include active categories
+     */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+    
+    /**
+     * Scope query to only include root categories
+     */
+    public function scopeRoot(Builder $query): Builder
+    {
+        return $query->whereNull('parent_id');
+    }
+    
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+    
+    /**
+     * Check if category is a root category
+     */
+    public function isRoot(): bool
+    {
+        return $this->parent_id === null;
+    }
+    
+    /**
+     * Clear category cache when model is updated
+     */
+    public static function bootCategory(): void
+    {
+        static::saved(function ($category) {
+            Cache::forget("category-{$category->id}-descendants");
+            Cache::forget("category-{$category->id}-descendants-active");
+            Cache::forget("category-{$category->id}-ancestors");
+            Cache::forget("category-{$category->id}-ancestors-active");
+            Cache::forget("category-{$category->id}-tree");
+            Cache::forget("category-{$category->id}-tree-active");
+            Cache::forget('categories-root');
+            Cache::forget('categories-root-active');
+            Cache::forget('categories-active');
+        });
         
-        return $query->get();
+        static::deleted(function ($category) {
+            Cache::forget("category-{$category->id}-descendants");
+            Cache::forget("category-{$category->id}-descendants-active");
+            Cache::forget("category-{$category->id}-ancestors");
+            Cache::forget("category-{$category->id}-ancestors-active");
+            Cache::forget("category-{$category->id}-tree");
+            Cache::forget("category-{$category->id}-tree-active");
+            Cache::forget('categories-root');
+            Cache::forget('categories-root-active');
+            Cache::forget('categories-active');
+        });
     }
 }
