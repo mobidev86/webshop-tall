@@ -17,8 +17,12 @@ class ProductListing extends Component
     #[Url]
     public $search = '';
     
+    /**
+     * Selected category ID (integer) or null for all categories
+     * @var int|null
+     */
     #[Url]
-    public $selectedCategory = '';
+    public $selectedCategory = null;
     
     #[Url]
     public $sortBy = 'name';
@@ -34,8 +38,25 @@ class ProductListing extends Component
      */
     public function mount()
     {
-        // Handle initial values from URL params if needed
-        // Ensures proper rehydration on page reload
+        // Ensure selectedCategory is properly initialized
+        if ($this->selectedCategory === '') {
+            $this->selectedCategory = null;
+        } elseif (is_numeric($this->selectedCategory)) {
+            $this->selectedCategory = (int)$this->selectedCategory;
+        }
+    }
+    
+    /**
+     * Called after the component is hydrated but before an action is performed
+     */
+    public function hydrate()
+    {
+        // Ensure proper type handling after hydration
+        if ($this->selectedCategory === '') {
+            $this->selectedCategory = null;
+        } elseif (is_numeric($this->selectedCategory)) {
+            $this->selectedCategory = (int)$this->selectedCategory;
+        }
     }
     
     #[On('search-submitted')]
@@ -185,6 +206,19 @@ class ProductListing extends Component
     {
         $this->set('sortDirection', $this->sortDirection === 'asc' ? 'desc' : 'asc');
         $this->resetPage();
+    }
+    
+    /**
+     * Reset all filters and refresh the component
+     */
+    public function resetFilters()
+    {
+        // Reset all filterable properties
+        $this->reset(['selectedCategory', 'search', 'sortBy', 'sortDirection']);
+        $this->resetPage();
+        
+        // Force a complete component refresh
+        return redirect()->to(request()->header('Referer'));
     }
     
     public function render()

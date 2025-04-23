@@ -46,6 +46,13 @@
                     <h1 class="text-3xl font-bold tracking-tight text-gray-900">Our Products</h1>
                     
                     <div class="flex items-center">
+                        <button 
+                            wire:click="resetFilters" 
+                            class="mr-4 text-sm text-indigo-600 hover:text-indigo-800"
+                        >
+                            Reset All Filters
+                        </button>
+                        
                         <div class="relative inline-block text-left">
                             <div>
                                 <select wire:model.live="sortBy" id="sort-by" class="rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
@@ -82,7 +89,7 @@
                             <div>
                                 <h3 class="text-lg font-medium text-gray-900">Categories</h3>
                                 <ul class="mt-4 space-y-3">
-                                    <li>
+                                    <li wire:key="category-all">
                                         <button 
                                             wire:click="clearCategory" 
                                             class="flex items-center {{ !$selectedCategory ? 'text-indigo-600 font-medium' : 'text-gray-500' }}"
@@ -91,7 +98,7 @@
                                         </button>
                                     </li>
                                     @foreach($categories as $category)
-                                        <li>
+                                        <li wire:key="category-{{ $category->id }}">
                                             <button 
                                                 wire:click="selectCategory({{ $category->id }})" 
                                                 class="flex items-center {{ $selectedCategory == $category->id ? 'text-indigo-600 font-medium' : 'text-gray-500' }}"
