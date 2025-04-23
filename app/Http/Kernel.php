@@ -40,7 +40,7 @@ class Kernel extends HttpKernel
 
         'api' => [
             // \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
-            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
     ];
@@ -67,4 +67,4 @@ class Kernel extends HttpKernel
         'customer' => \App\Http\Middleware\CustomerAccessMiddleware::class, // Register our customer middleware
         'admin.profile.restrict' => \App\Http\Middleware\AdminProfileRestrictMiddleware::class, // Middleware to restrict admin users from profile page
     ];
-} 
+}

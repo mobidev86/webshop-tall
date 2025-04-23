@@ -129,3 +129,72 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Code Quality Tools
+
+### Static Analysis with Larastan
+
+[Larastan](https://github.com/nunomaduro/larastan) provides static analysis for your Laravel application. It helps identify potential bugs and errors before they occur in production.
+
+To run Larastan:
+
+```bash
+composer analyse
+```
+
+This will analyze your code at level 5 (out of 9). You can adjust the strictness level in `phpstan.neon`.
+
+#### Common Error Types
+
+- `property.notFound`: Properties that don't exist on a class 
+- `method.notFound`: Methods that don't exist on a class
+- `argument.type`: Type mismatch in method arguments
+
+#### Fixing Errors
+
+- Add proper PHPDoc annotations to your models with `@property` tags
+- Use type hinting and return type declarations
+- Add methods or properties that are missing
+- Create model attribute casts for dynamic properties
+
+### Code Formatting with Laravel Pint
+
+[Laravel Pint](https://laravel.com/docs/pint) is an opinionated PHP code style fixer based on PHP-CS-Fixer with a pre-defined Laravel coding style.
+
+To format your code:
+
+```bash
+composer format
+```
+
+To check if your code would be modified by Pint without actually changing files:
+
+```bash
+composer format -- --test
+```
+
+### Running All Code Quality Checks
+
+To run both static analysis and code style checks:
+
+```bash
+composer lint
+```
+
+This will run both Larastan and Pint in test mode to verify your code meets quality standards.
+
+## Customizing Tool Configurations
+
+### Larastan Configuration
+
+Edit `phpstan.neon` to customize:
+- Analysis paths
+- Error level (1-9)
+- Excluded paths
+- Ignored errors
+
+### Pint Configuration
+
+Edit `pint.json` to customize:
+- Code style preset
+- Specific formatting rules

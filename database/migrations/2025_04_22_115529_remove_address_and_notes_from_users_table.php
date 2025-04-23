@@ -18,7 +18,7 @@ return new class extends Migration
                 'state',
                 'zip_code',
                 'country',
-                'notes'
+                'notes',
             ]);
         });
     }

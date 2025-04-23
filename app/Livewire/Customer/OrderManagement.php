@@ -3,39 +3,44 @@
 namespace App\Livewire\Customer;
 
 use App\Models\Order;
-use Livewire\Component;
-use Livewire\WithPagination;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('components.layouts.app')]
 class OrderManagement extends Component
 {
     use WithPagination;
-    
+
     public $search = '';
+
     public $status = '';
+
     public $sort = 'created_at';
+
     public $sortDirection = 'desc';
+
     public $showCancelConfirmation = false;
+
     public $selectedOrderId = null;
-    
+
     protected $queryString = [
         'search' => ['except' => ''],
         'status' => ['except' => ''],
     ];
-    
+
     public function updatingSearch()
     {
         $this->resetPage();
     }
-    
+
     public function updatingStatus()
     {
         $this->resetPage();
     }
-    
+
     public function sortBy($field)
     {
         if ($this->sort === $field) {
@@ -45,47 +50,49 @@ class OrderManagement extends Component
             $this->sortDirection = 'asc';
         }
     }
-    
+
     public function confirmCancel($orderId)
     {
         $this->selectedOrderId = $orderId;
         $this->showCancelConfirmation = true;
     }
-    
+
     public function cancelOrder()
     {
         $order = Order::where('id', $this->selectedOrderId)
             ->where('user_id', Auth::id())
             ->first();
-            
-        if (!$order) {
+
+        if (! $order) {
             session()->flash('error', 'Order not found or you do not have permission to cancel it.');
             $this->showCancelConfirmation = false;
+
             return;
         }
-        
+
         // Check if the order can be cancelled
-        if (!$order->canBeCancelled()) {
+        if (! $order->canBeCancelled()) {
             session()->flash('error', 'This order cannot be cancelled.');
             $this->showCancelConfirmation = false;
+
             return;
         }
-        
+
         // Attempt to cancel the order
         if ($order->cancel()) {
             session()->flash('success', 'Order has been cancelled successfully.');
         } else {
             session()->flash('error', 'Failed to cancel the order. Please try again.');
         }
-        
+
         $this->showCancelConfirmation = false;
     }
-    
+
     public function closeModal()
     {
         $this->showCancelConfirmation = false;
     }
-    
+
     public function getOrdersProperty()
     {
         return Order::where('user_id', Auth::id())
@@ -101,7 +108,7 @@ class OrderManagement extends Component
             ->orderBy($this->sort, $this->sortDirection)
             ->paginate(10);
     }
-    
+
     public function render()
     {
         return view('livewire.customer.order-management', [

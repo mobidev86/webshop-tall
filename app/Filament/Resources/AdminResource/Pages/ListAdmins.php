@@ -16,4 +16,4 @@ class ListAdmins extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
-} 
+}

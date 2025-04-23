@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('total_amount', 10, 2);
             $table->string('payment_method')->nullable();
             $table->string('shipping_method')->nullable();
-            
+
             // Shipping information
             $table->string('shipping_name');
             $table->string('shipping_email');
@@ -30,7 +30,7 @@ return new class extends Migration
             $table->string('shipping_state')->nullable();
             $table->string('shipping_zip');
             $table->string('shipping_country');
-            
+
             // Billing information
             $table->string('billing_name');
             $table->string('billing_email');
@@ -40,7 +40,7 @@ return new class extends Migration
             $table->string('billing_state')->nullable();
             $table->string('billing_zip');
             $table->string('billing_country');
-            
+
             $table->text('notes')->nullable();
             $table->timestamps();
         });

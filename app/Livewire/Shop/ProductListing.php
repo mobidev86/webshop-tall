@@ -4,25 +4,31 @@ namespace App\Livewire\Shop;
 
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Illuminate\Database\Eloquent\Builder;
-use Livewire\Attributes\Computed;
-use Illuminate\Support\Facades\Cache;
 
 class ProductListing extends Component
 {
     use WithPagination;
-    
+
     // Public properties without URL tracking for AJAX-based filtering
     public string $search = '';
+
     public ?int $selectedCategory = null;
+
     public string $sortBy = 'name';
+
     public string $sortDirection = 'asc';
+
     public int $perPage = 12;
+
     public string $searchPlaceholder = 'Search by product name, description, or category...';
+
     public bool $isLoading = false;
-    
+
     /**
      * Initialize the component
      */
@@ -30,7 +36,7 @@ class ProductListing extends Component
     {
         $this->normalizeSelectedCategory();
     }
-    
+
     /**
      * Before any update is performed, set loading state
      */
@@ -38,7 +44,7 @@ class ProductListing extends Component
     {
         $this->isLoading = true;
     }
-    
+
     /**
      * After any property is updated, reset loading state
      */
@@ -46,7 +52,7 @@ class ProductListing extends Component
     {
         $this->isLoading = false;
     }
-    
+
     /**
      * Reset pagination when search is updated
      */
@@ -54,7 +60,7 @@ class ProductListing extends Component
     {
         $this->resetPage();
     }
-    
+
     /**
      * Reset pagination when category is updated
      */
@@ -62,7 +68,7 @@ class ProductListing extends Component
     {
         $this->resetPage();
     }
-    
+
     /**
      * Reset pagination when sort parameters change
      */
@@ -70,7 +76,7 @@ class ProductListing extends Component
     {
         $this->resetPage();
     }
-    
+
     /**
      * Reset pagination when sort direction changes
      */
@@ -78,7 +84,7 @@ class ProductListing extends Component
     {
         $this->resetPage();
     }
-    
+
     /**
      * Normalize the selectedCategory to ensure it's properly typed
      */
@@ -87,21 +93,21 @@ class ProductListing extends Component
         if ($this->selectedCategory === '') {
             $this->selectedCategory = null;
         } elseif (is_numeric($this->selectedCategory)) {
-            $this->selectedCategory = (int)$this->selectedCategory;
+            $this->selectedCategory = (int) $this->selectedCategory;
         }
     }
-    
+
     /**
      * Select a category for filtering using AJAX
      */
     public function selectCategory($categoryId): void
     {
         $this->isLoading = true;
-        $this->selectedCategory = is_numeric($categoryId) ? (int)$categoryId : null;
+        $this->selectedCategory = is_numeric($categoryId) ? (int) $categoryId : null;
         $this->resetPage();
         $this->isLoading = false;
     }
-    
+
     /**
      * Clear category filter using AJAX
      */
@@ -112,7 +118,7 @@ class ProductListing extends Component
         $this->resetPage();
         $this->isLoading = false;
     }
-    
+
     /**
      * Update the sort direction using AJAX
      */
@@ -123,7 +129,7 @@ class ProductListing extends Component
         $this->resetPage();
         $this->isLoading = false;
     }
-    
+
     /**
      * Update sort field using AJAX
      */
@@ -139,7 +145,7 @@ class ProductListing extends Component
         $this->resetPage();
         $this->isLoading = false;
     }
-    
+
     /**
      * Reset all filters and sorting options using AJAX
      */
@@ -150,7 +156,7 @@ class ProductListing extends Component
         $this->resetPage();
         $this->isLoading = false;
     }
-    
+
     /**
      * Get computed property for products
      */
@@ -159,7 +165,7 @@ class ProductListing extends Component
     {
         return $this->productsQuery()->paginate($this->perPage);
     }
-    
+
     /**
      * Get computed property for categories
      */
@@ -173,7 +179,7 @@ class ProductListing extends Component
                 ->get();
         });
     }
-    
+
     /**
      * Get computed property for no results message
      */
@@ -181,23 +187,23 @@ class ProductListing extends Component
     public function noResultsMessage(): string
     {
         $message = 'No products found';
-        
+
         if ($this->search) {
-            $message .= " matching \"" . htmlspecialchars($this->search, ENT_QUOTES, 'UTF-8') . "\"";
+            $message .= ' matching "' . htmlspecialchars($this->search, ENT_QUOTES, 'UTF-8') . '"';
         }
-        
+
         if ($this->selectedCategory) {
             $category = Category::find($this->selectedCategory);
             if ($category) {
                 // Use htmlspecialchars_decode to convert any HTML entities back to their character equivalents
                 $categoryName = htmlspecialchars_decode($category->name);
-                $message .= " in the \"" . $categoryName . "\" category";
+                $message .= ' in the "' . $categoryName . '" category';
             }
         }
-        
+
         return $message;
     }
-    
+
     /**
      * Highlight search terms in product names
      */
@@ -206,11 +212,12 @@ class ProductListing extends Component
         if (empty($this->search) || empty($text)) {
             return e($text);
         }
-        
+
         $search = preg_quote($this->search, '/');
+
         return preg_replace('/(' . $search . ')/i', '<span class="bg-yellow-100 font-semibold">$1</span>', e($text));
     }
-    
+
     /**
      * Build query for products based on filters
      */
@@ -218,11 +225,11 @@ class ProductListing extends Component
     {
         $query = Product::query()
             ->where('is_active', true);
-            
+
         // Apply search filter
         if ($this->search !== '') {
             $searchTerm = '%' . $this->search . '%';
-            
+
             $query->where(function (Builder $query) use ($searchTerm) {
                 $query->where('name', 'like', $searchTerm)
                     ->orWhere('description', 'like', $searchTerm)
@@ -231,18 +238,18 @@ class ProductListing extends Component
                     });
             });
         }
-        
+
         // Apply category filter
         if ($this->selectedCategory) {
             $query->whereHas('categories', function (Builder $query) {
                 $query->where('categories.id', $this->selectedCategory);
             });
         }
-        
+
         // Apply sorting
         return $query->orderBy($this->sortBy, $this->sortDirection);
     }
-    
+
     /**
      * Render the component
      */
@@ -251,9 +258,7 @@ class ProductListing extends Component
         return view('livewire.shop.product-listing', [
             'products' => $this->products,
             'categories' => $this->categories,
-            'noResultsMessage' => $this->noResultsMessage
+            'noResultsMessage' => $this->noResultsMessage,
         ]);
     }
 }
-
-
