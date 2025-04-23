@@ -84,8 +84,8 @@
                                 <ul class="mt-4 space-y-3">
                                     <li>
                                         <button 
-                                            wire:click="$set('selectedCategory', '')" 
-                                            class="flex items-center {{ $selectedCategory === '' ? 'text-indigo-600 font-medium' : 'text-gray-500' }}"
+                                            wire:click="clearCategory" 
+                                            class="flex items-center {{ !$selectedCategory ? 'text-indigo-600 font-medium' : 'text-gray-500' }}"
                                         >
                                             All Categories
                                         </button>
@@ -93,7 +93,7 @@
                                     @foreach($categories as $category)
                                         <li>
                                             <button 
-                                                wire:click="$set('selectedCategory', '{{ $category->id }}')" 
+                                                wire:click="selectCategory({{ $category->id }})" 
                                                 class="flex items-center {{ $selectedCategory == $category->id ? 'text-indigo-600 font-medium' : 'text-gray-500' }}"
                                             >
                                                 {{ $category->name }}
@@ -207,7 +207,7 @@
                                         @if($selectedCategory)
                                             <button 
                                                 type="button" 
-                                                wire:click="$set('selectedCategory', '')" 
+                                                wire:click="clearCategory" 
                                                 class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                                             >
                                                 Clear Category Filter

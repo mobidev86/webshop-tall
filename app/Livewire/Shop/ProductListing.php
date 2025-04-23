@@ -8,25 +8,35 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 
 class ProductListing extends Component
 {
     use WithPagination;
     
+    #[Url]
     public $search = '';
+    
+    #[Url]
     public $selectedCategory = '';
+    
+    #[Url]
     public $sortBy = 'name';
+    
+    #[Url]
     public $sortDirection = 'asc';
+    
     public $perPage = 12;
     public $searchPlaceholder = 'Search by product name, description, or category...';
     
-    protected $queryString = [
-        'search' => ['except' => ''],
-        'selectedCategory' => ['except' => ''],
-        'sortBy' => ['except' => 'name'],
-        'sortDirection' => ['except' => 'asc'],
-        'perPage' => ['except' => 12],
-    ];
+    /**
+     * Initialize the component
+     */
+    public function mount()
+    {
+        // Handle initial values from URL params if needed
+        // Ensures proper rehydration on page reload
+    }
     
     #[On('search-submitted')]
     public function updateSearch($search)
@@ -40,20 +50,25 @@ class ProductListing extends Component
         $this->resetPage();
     }
     
-    public function updatingSelectedCategory()
+    public function updatingSelectedCategory($value)
     {
+        // Ensure empty string is treated as null
+        if ($value === '') {
+            $this->selectedCategory = null;
+        }
+        
         $this->resetPage();
     }
     
     public function sortBy($field)
     {
         if ($this->sortBy === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+            $this->set('sortDirection', $this->sortDirection === 'asc' ? 'desc' : 'asc');
         } else {
-            $this->sortDirection = 'asc';
+            $this->set('sortDirection', 'asc');
         }
         
-        $this->sortBy = $field;
+        $this->set('sortBy', $field);
     }
     
     public function getProductsProperty()
@@ -117,7 +132,8 @@ class ProductListing extends Component
             });
         }
         
-        if ($this->selectedCategory) {
+        // Only apply category filter if a valid category is selected
+        if ($this->selectedCategory && is_numeric($this->selectedCategory)) {
             $category = Category::find($this->selectedCategory);
             
             if ($category) {
@@ -135,6 +151,40 @@ class ProductListing extends Component
         }
         
         return $query;
+    }
+    
+    /**
+     * Set the selected category and reset pagination
+     */
+    public function selectCategory($categoryId)
+    {
+        // Convert to integer if numeric
+        $this->selectedCategory = is_numeric($categoryId) ? (int)$categoryId : $categoryId;
+        $this->resetPage();
+    }
+    
+    /**
+     * Clear the selected category and reset pagination
+     */
+    public function clearCategory()
+    {
+        // Force type conversion to ensure proper null/empty state
+        $this->selectedCategory = null;
+        
+        // Reset page to avoid pagination issues
+        $this->resetPage();
+        
+        // Refresh the component to ensure proper re-rendering
+        $this->dispatch('refresh');
+    }
+    
+    /**
+     * Toggle sort direction between asc and desc
+     */
+    public function toggleSortDirection()
+    {
+        $this->set('sortDirection', $this->sortDirection === 'asc' ? 'desc' : 'asc');
+        $this->resetPage();
     }
     
     public function render()
