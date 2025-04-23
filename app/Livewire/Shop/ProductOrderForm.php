@@ -45,11 +45,11 @@ class ProductOrderForm extends Component
 
     protected array $rules = [
         'quantity' => 'required|integer|min:1',
-        'guestEmail' => 'sometimes|required|email',
-        'guestName' => 'sometimes|required|string|max:255',
-        'guestPhone' => 'sometimes|nullable|string|max:20',
-        'guestPassword' => 'sometimes|required|min:8',
-        'guestPasswordConfirmation' => 'sometimes|required|same:guestPassword',
+        'guestEmail' => 'required_if:showEmailForm,true|email',
+        'guestName' => 'required_if:showEmailForm,true|string|max:255',
+        'guestPhone' => 'nullable|string|max:20',
+        'guestPassword' => 'required_if:showEmailForm,true|min:8',
+        'guestPasswordConfirmation' => 'required_if:showEmailForm,true|same:guestPassword',
     ];
 
     public function mount(Product $product): void
@@ -156,7 +156,7 @@ class ProductOrderForm extends Component
 
     public function submitOrder(): void
     {
-        // Allow guest checkout with email
+        // For guest users, validate all required guest fields
         if (! Auth::check() && $this->showEmailForm) {
             $this->validate([
                 'guestEmail' => 'required|email',
@@ -167,10 +167,15 @@ class ProductOrderForm extends Component
                 'quantity' => 'required|integer|min:1',
             ]);
         }
-        // Require login for normal flow
-        elseif (! Auth::check()) {
+        // For authenticated users, just validate quantity
+        elseif (Auth::check()) {
+            $this->validate([
+                'quantity' => 'required|integer|min:1',
+            ]);
+        }
+        // If not authenticated and not showing email form, require login
+        else {
             $this->loginRequired = true;
-
             return;
         }
 
@@ -186,7 +191,6 @@ class ProductOrderForm extends Component
             if (! $this->product->isInStock()) {
                 $this->addError('quantity', 'This product is out of stock.');
                 $this->processingOrder = false;
-
                 return;
             }
 
@@ -195,12 +199,8 @@ class ProductOrderForm extends Component
                 $this->addError('quantity', "Only {$this->product->stock} units available.");
                 $this->quantity = $this->product->stock;
                 $this->processingOrder = false;
-
                 return;
             }
-
-            // Validate form fields
-            $this->validate();
 
             $this->createOrderWithTransaction();
         } catch (\Exception $e) {
@@ -221,12 +221,23 @@ class ProductOrderForm extends Component
             // Double-check product stock in transaction to prevent race conditions
             $freshProduct = Product::lockForUpdate()->find($this->product->id);
 
-            if (! $freshProduct || $freshProduct->stock < $this->quantity) {
+            if (! $freshProduct) {
+                throw new \Exception("Product not found or has been removed.");
+            }
+            
+            if ($freshProduct->stock < $this->quantity) {
                 throw new \Exception("Insufficient stock available. Only {$freshProduct->stock} units left.");
             }
 
             // Handle guest checkout with email or normal user checkout
             if (! Auth::check() && ! empty($this->guestEmail)) {
+                // Revalidate guest fields before proceeding
+                $this->validate([
+                    'guestEmail' => 'required|email',
+                    'guestName' => 'required|string|max:255',
+                    'guestPassword' => 'required|min:8',
+                ]);
+                
                 $order = $this->createGuestOrder($freshProduct);
             } else {
                 // Get current user
@@ -256,14 +267,12 @@ class ProductOrderForm extends Component
             if (Auth::check() && ! empty($this->guestEmail)) {
                 // Redirect to orders page for newly registered and logged in users
                 redirect()->route('customer.orders')->with('success', "Order #{$order->order_number} placed successfully!");
-
                 return;
             }
 
             // For guest users who are still not logged in
             if (! Auth::check()) {
                 $this->handleOrderSuccess($order->order_number);
-
                 return;
             }
 
@@ -286,16 +295,20 @@ class ProductOrderForm extends Component
 
         // Create a temporary user if the email doesn't exist
         if (! $existingUser) {
-            $existingUser = User::create([
-                'name' => $this->guestName,
-                'email' => $this->guestEmail,
-                'phone' => $this->guestPhone,
-                'password' => bcrypt($this->guestPassword),
-                'role' => User::ROLE_CUSTOMER,
-                'is_temporary' => false,  // No longer temporary since we have complete info
-                'is_active' => true,
-            ]);
-            $newUserCreated = true;
+            try {
+                $existingUser = User::create([
+                    'name' => $this->guestName,
+                    'email' => $this->guestEmail,
+                    'phone' => $this->guestPhone,
+                    'password' => bcrypt($this->guestPassword),
+                    'role' => User::ROLE_CUSTOMER,
+                    'is_temporary' => false,  // No longer temporary since we have complete info
+                    'is_active' => true,
+                ]);
+                $newUserCreated = true;
+            } catch (\Exception $e) {
+                throw new \Exception('Failed to create user account: ' . $e->getMessage());
+            }
         }
 
         // Create the order
@@ -426,12 +439,16 @@ class ProductOrderForm extends Component
     {
         // Check if user is logged in
         if (! Auth::check()) {
-            // Show email form for direct orders too
+            // Show email form for direct orders
             $this->showEmailForm = true;
-
             return;
         }
 
+        // Validate quantity only for logged-in users
+        $this->validate([
+            'quantity' => 'required|integer|min:1',
+        ]);
+        
         $this->submitOrder();
     }
 

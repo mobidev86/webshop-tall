@@ -79,6 +79,38 @@ class OrderItem extends Model
     protected static function booted(): void
     {
         static::creating(function (OrderItem $orderItem) {
+            // Make sure product_name is always set
+            if (empty($orderItem->product_name) && $orderItem->product_id) {
+                $product = Product::find($orderItem->product_id);
+                if ($product) {
+                    $orderItem->product_name = $product->name;
+                } else {
+                    // If product doesn't exist, use a fallback name
+                    $orderItem->product_name = "Product #{$orderItem->product_id}";
+                }
+            }
+            
+            // Ensure quantity is at least 1
+            if (empty($orderItem->quantity) || $orderItem->quantity < 1) {
+                $orderItem->quantity = 1;
+            }
+            
+            // Ensure price is valid
+            if (empty($orderItem->price) || $orderItem->price <= 0) {
+                // Try to get price from product
+                if ($orderItem->product_id) {
+                    $product = Product::find($orderItem->product_id);
+                    if ($product) {
+                        $orderItem->price = $product->getCurrentPrice();
+                    } else {
+                        $orderItem->price = 0.00;
+                    }
+                } else {
+                    $orderItem->price = 0.00;
+                }
+            }
+            
+            // Calculate subtotal if not set
             if (empty($orderItem->subtotal)) {
                 $orderItem->subtotal = $orderItem->calculateSubtotal();
             }
