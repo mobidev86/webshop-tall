@@ -170,8 +170,8 @@ class ProductOrderForm extends Component
             // Update local product stock to reflect the change
             $this->product = $freshProduct;
             
-            // Reset form
-            $this->handleOrderSuccess($order->order_number);
+            // Redirect to orders page instead of showing confirmation message
+            redirect()->route('customer.orders')->with('success', "Order #{$order->order_number} placed successfully!");
             
         } catch (\Exception $e) {
             DB::rollBack();
@@ -228,7 +228,7 @@ class ProductOrderForm extends Component
     }
     
     /**
-     * Handle a successful order
+     * Handle a successful order - no longer used as we redirect directly
      */
     private function handleOrderSuccess(string $orderNumber): void
     {
@@ -249,20 +249,21 @@ class ProductOrderForm extends Component
             'user_id' => Auth::id()
         ]);
         
-        session()->flash('error', 'An error occurred while placing your order: ' . $e->getMessage());
-        $this->addError('general', 'Order processing failed. Please try again.');
+        // Add error message to the form
+        $this->addError('general', 'Failed to create order: ' . $e->getMessage());
     }
     
+    /**
+     * Direct order with default quantity
+     */
     public function directOrder(): void
     {
-        // Only allow logged-in users to place orders
+        // Check if user is logged in
         if (!Auth::check()) {
             $this->loginRequired = true;
             return;
         }
         
-        // Set default quantity to 1 and submit the order
-        $this->quantity = 1;
         $this->submitOrder();
     }
     
