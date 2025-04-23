@@ -15,6 +15,142 @@
                 </div>
             </div>
         </div>
+    @elseif($showEmailForm)
+        <div class="bg-white p-4 border border-gray-200 rounded-md mt-4">
+            <h4 class="text-sm font-medium text-gray-900 mb-3">Quick Checkout</h4>
+            
+            <form wire:submit.prevent="submitOrder">
+                @if(session()->has('error'))
+                    <div class="rounded-md bg-red-50 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">{{ session('error') }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+                
+                @error('general')
+                    <div class="rounded-md bg-red-50 p-4 mb-4">
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-red-800">{{ $message }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                @enderror
+                
+                <div class="space-y-4">
+                    <!-- Email input for guest users -->
+                    <div>
+                        <label for="guestEmail" class="block text-sm font-medium leading-6 text-gray-900">Email Address</label>
+                        <div class="mt-1">
+                            <input 
+                                type="email" 
+                                wire:model.live="guestEmail" 
+                                id="guestEmail"
+                                class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                placeholder="your@email.com"
+                                required
+                            >
+                        </div>
+                        @error('guestEmail') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                        
+                        <div class="mt-2 text-xs text-gray-500 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Enter your email to place an order without creating an account</span>
+                        </div>
+                        
+                        <div class="mt-2 text-xs">
+                            <a href="{{ route('login') }}" class="text-indigo-600 hover:text-indigo-500">Already have an account? Sign in</a>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="quantity" class="block text-sm font-medium leading-6 text-gray-900">Quantity</label>
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                            <button 
+                                type="button"
+                                wire:click="decrementQuantity"
+                                class="relative -ml-px inline-flex items-center gap-x-1.5 rounded-l-md px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                            >
+                                -
+                            </button>
+                            <input 
+                                type="number" 
+                                wire:model.live="quantity" 
+                                id="quantity"
+                                min="1"
+                                max="{{ $product->stock }}"
+                                class="block w-full border-0 py-1.5 pl-4 pr-4 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 sm:text-sm sm:leading-6 text-center"
+                            >
+                            <button 
+                                type="button"
+                                wire:click="incrementQuantity"
+                                class="relative -ml-px inline-flex items-center gap-x-1.5 rounded-r-md px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                            >
+                                +
+                            </button>
+                        </div>
+                        @error('quantity') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
+                    </div>
+                    
+                    <div class="mt-4">
+                        <div class="rounded-md bg-blue-50 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3 flex-1 md:flex md:justify-between">
+                                    <p class="text-sm text-blue-700">We'll collect shipping details after checkout.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between space-x-2">
+                        <p class="text-sm font-medium text-gray-700">
+                            Total: ${{ number_format($product->getCurrentPrice() * $quantity, 2) }}
+                        </p>
+                        
+                        <div class="flex space-x-2">
+                            <button 
+                                type="button"
+                                wire:click="toggleForm"
+                                class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            
+                            <button 
+                                type="submit"
+                                class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                                @if(!$product->isInStock() || $processingOrder) disabled @endif
+                                wire:loading.attr="disabled"
+                                wire:loading.class="opacity-50 cursor-not-allowed"
+                            >
+                                <span wire:loading.remove wire:target="submitOrder">Place Order</span>
+                                <span wire:loading wire:target="submitOrder">Processing...</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
     @elseif($showForm)
         <div class="bg-white p-4 border border-gray-200 rounded-md mt-4">
             <h4 class="text-sm font-medium text-gray-900 mb-3">Confirm your order</h4>
@@ -124,6 +260,22 @@
                 </div>
             </form>
         </div>
+    @elseif($orderComplete)
+        <div class="rounded-md bg-green-50 p-4 mt-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 0116 0zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-green-800">Order placed successfully!</h3>
+                    <div class="mt-2 text-sm text-green-700">
+                        <p>Your order #{{ $orderNumber }} has been placed. We've sent a confirmation to your email.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     @else
         @if(Auth::check())
             <div class="mt-4">
@@ -186,7 +338,7 @@
                 @if(!$product->isInStock()) disabled @endif
             >
                 @if($product->isInStock())
-                    Order Now - Sign In Required
+                    Quick Checkout
                 @else
                     Out of Stock
                 @endif

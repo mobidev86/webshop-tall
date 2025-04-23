@@ -22,9 +22,12 @@ class ProductOrderForm extends Component
     public string $orderNumber = '';
     public bool $processingOrder = false;
     public bool $loginRequired = false;
+    public bool $showEmailForm = false;
+    public string $guestEmail = '';
     
     protected array $rules = [
         'quantity' => 'required|integer|min:1',
+        'guestEmail' => 'sometimes|required|email',
     ];
     
     public function mount(Product $product): void
@@ -50,8 +53,9 @@ class ProductOrderForm extends Component
     {
         // Check if user is logged in
         if (!Auth::check()) {
-            // Set flag to show login required message
-            $this->loginRequired = true;
+            // Show email form instead of requiring login
+            $this->showEmailForm = true;
+            $this->loginRequired = false;
             return;
         }
         
@@ -92,8 +96,15 @@ class ProductOrderForm extends Component
     
     public function submitOrder(): void
     {
-        // Check if user is logged in
-        if (!Auth::check()) {
+        // Allow guest checkout with email
+        if (!Auth::check() && $this->showEmailForm) {
+            $this->validate([
+                'guestEmail' => 'required|email',
+                'quantity' => 'required|integer|min:1',
+            ]);
+        } 
+        // Require login for normal flow
+        else if (!Auth::check()) {
             $this->loginRequired = true;
             return;
         }
@@ -148,15 +159,20 @@ class ProductOrderForm extends Component
                 throw new \Exception("Insufficient stock available. Only {$freshProduct->stock} units left.");
             }
             
-            // Get current user
-            $user = Auth::user();
-            
-            if (!$user) {
-                throw new \Exception("User not authenticated.");
+            // Handle guest checkout with email or normal user checkout
+            if (!Auth::check() && !empty($this->guestEmail)) {
+                $order = $this->createGuestOrder($freshProduct);
+            } else {
+                // Get current user
+                $user = Auth::user();
+                
+                if (!$user) {
+                    throw new \Exception("User not authenticated.");
+                }
+                
+                // Create order
+                $order = $this->createOrder($user, $freshProduct);
             }
-            
-            // Create order
-            $order = $this->createOrder($user, $freshProduct);
             
             // Create order item
             $this->createOrderItem($order, $freshProduct);
@@ -170,13 +186,56 @@ class ProductOrderForm extends Component
             // Update local product stock to reflect the change
             $this->product = $freshProduct;
             
-            // Redirect to orders page instead of showing confirmation message
+            // For guest users, show confirmation without redirecting to account page
+            if (!Auth::check()) {
+                $this->handleOrderSuccess($order->order_number);
+                return;
+            }
+            
+            // Redirect to orders page for logged in users
             redirect()->route('customer.orders')->with('success', "Order #{$order->order_number} placed successfully!");
             
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
         }
+    }
+    
+    /**
+     * Create a guest order with just email
+     */
+    private function createGuestOrder(Product $product): Order
+    {
+        // Check if this email belongs to an existing user
+        $existingUser = User::where('email', $this->guestEmail)->first();
+        
+        return Order::create([
+            // Link to existing user if email matches
+            'user_id' => $existingUser ? $existingUser->id : null,
+            'order_number' => Order::generateOrderNumber(),
+            'status' => Order::STATUS_PENDING,
+            'total_amount' => $product->getCurrentPrice() * $this->quantity,
+            
+            // Set email (and minimal shipping info)
+            'shipping_email' => $this->guestEmail,
+            'shipping_name' => $existingUser ? $existingUser->name : '',
+            'shipping_phone' => $existingUser ? ($existingUser->phone ?? '') : '',
+            'shipping_address' => $existingUser ? ($existingUser->address ?? '') : '',
+            'shipping_city' => $existingUser ? ($existingUser->city ?? '') : '',
+            'shipping_state' => $existingUser ? ($existingUser->state ?? '') : '',
+            'shipping_zip' => $existingUser ? ($existingUser->zip_code ?? '') : '',
+            'shipping_country' => $existingUser ? ($existingUser->country ?? '') : '',
+            
+            // Set billing to match shipping
+            'billing_email' => $this->guestEmail,
+            'billing_name' => $existingUser ? $existingUser->name : '',
+            'billing_phone' => $existingUser ? ($existingUser->phone ?? '') : '',
+            'billing_address' => $existingUser ? ($existingUser->address ?? '') : '',
+            'billing_city' => $existingUser ? ($existingUser->city ?? '') : '',
+            'billing_state' => $existingUser ? ($existingUser->state ?? '') : '',
+            'billing_zip' => $existingUser ? ($existingUser->zip_code ?? '') : '',
+            'billing_country' => $existingUser ? ($existingUser->country ?? '') : '',
+        ]);
     }
     
     /**
@@ -232,7 +291,7 @@ class ProductOrderForm extends Component
      */
     private function handleOrderSuccess(string $orderNumber): void
     {
-        $this->reset(['quantity', 'showForm']);
+        $this->reset(['quantity', 'showForm', 'showEmailForm', 'guestEmail']);
         $this->quantity = 1;
         $this->orderComplete = true;
         $this->orderNumber = $orderNumber;
@@ -246,7 +305,8 @@ class ProductOrderForm extends Component
         Log::error('Order creation failed: ' . $e->getMessage(), [
             'product_id' => $this->product->id,
             'quantity' => $this->quantity,
-            'user_id' => Auth::id()
+            'user_id' => Auth::id(),
+            'guest_email' => $this->guestEmail ?? null,
         ]);
         
         // Add error message to the form
@@ -260,7 +320,8 @@ class ProductOrderForm extends Component
     {
         // Check if user is logged in
         if (!Auth::check()) {
-            $this->loginRequired = true;
+            // Show email form for direct orders too
+            $this->showEmailForm = true;
             return;
         }
         
