@@ -82,7 +82,7 @@
                                 <a href="{{ route('products.show', $product->slug) }}" class="block">
                                     <div class="aspect-w-1 aspect-h-1 bg-gray-200">
                                         @if($product->image)
-                                            <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
+                                            <img src="{{ $product->imageUrl }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
                                         @else
                                             <div class="w-full h-full flex items-center justify-center bg-gray-100">
                                                 <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

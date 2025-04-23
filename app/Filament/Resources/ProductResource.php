@@ -106,6 +106,7 @@ class ProductResource extends Resource
                             ->schema([
                                 Forms\Components\FileUpload::make('image')
                                     ->image()
+                                    ->disk('public')
                                     ->directory('products')
                                     ->maxSize(5120)
                                     ->imageResizeMode('cover')
@@ -125,6 +126,7 @@ class ProductResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('image')
+                    ->disk('public')
                     ->square()
                     ->defaultImageUrl(fn (Product $record): string => 'https://via.placeholder.com/50')
                     ->label('Image'),

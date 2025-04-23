@@ -89,7 +89,7 @@
                                             <div class="flex items-center">
                                                 <div class="flex-shrink-0 h-10 w-10 bg-gray-100 rounded-md overflow-hidden">
                                                     @if($item->product && $item->product->image)
-                                                        <img src="{{ $item->product->image }}" alt="{{ $item->product_name }}" class="h-full w-full object-cover">
+                                                        <img src="{{ $item->product->imageUrl }}" alt="{{ $item->product_name }}" class="h-full w-full object-cover">
                                                     @else
                                                         <svg class="h-full w-full text-gray-300" fill="currentColor" viewBox="0 0 24 24">
                                                             <path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" />

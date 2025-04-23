@@ -38,6 +38,18 @@ class Product extends Model
     ];
     
     /**
+     * Get the URL for the product image
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->image) {
+            return null;
+        }
+        
+        return asset('storage/' . $this->image);
+    }
+    
+    /**
      * Relationship with categories (BelongsToMany)
      */
     public function categories(): BelongsToMany

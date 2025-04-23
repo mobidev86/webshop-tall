@@ -188,7 +188,7 @@
                                         <div wire:key="product-{{ $product->id }}" class="group relative bg-white overflow-hidden rounded-md shadow-sm transition-all duration-300 hover:shadow-md border border-gray-100">
                                             <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden bg-gray-50 xl:aspect-h-8 xl:aspect-w-7">
                                                 @if($product->image)
-                                                    <img src="{{ $product->image }}" alt="{{ $product->name }}" class="h-56 w-full object-cover object-center group-hover:scale-105 transition-transform duration-700">
+                                                    <img src="{{ $product->imageUrl }}" alt="{{ $product->name }}" class="h-56 w-full object-cover object-center group-hover:scale-105 transition-transform duration-700">
                                                 @else
                                                     <div class="h-56 w-full flex items-center justify-center text-gray-400 bg-gray-50">
                                                         <svg class="h-12 w-12" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
