@@ -1,11 +1,15 @@
 <div>
-    <div class="bg-white">
+    <div class="bg-gradient-to-b from-slate-50 to-white">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <!-- Main search bar at the top -->
-            <div class="pt-24 pb-6">
-                <div class="relative mb-6">
+            <!-- Hero section with search -->
+            <div class="pt-20 pb-10">
+                <h1 class="text-4xl font-serif font-bold tracking-tight text-gray-900 mb-2 text-center">Premium Collection</h1>
+                <p class="text-center text-gray-600 mb-10 max-w-2xl mx-auto">Discover our curated selection of exceptional products crafted with the finest materials and attention to detail.</p>
+                
+                <!-- Main search bar -->
+                <div class="max-w-2xl mx-auto mb-12">
                     <div class="relative">
-                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
                             <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
                             </svg>
@@ -13,13 +17,13 @@
                         <input 
                             wire:model.live.debounce.300ms="search" 
                             type="text" 
-                            class="block w-full rounded-lg border-0 py-3 pl-10 pr-20 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-lg"
+                            class="block w-full rounded-md border-0 py-3 pl-11 pr-20 text-gray-900 ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-slate-600 sm:text-md shadow-sm"
                             placeholder="{{ $searchPlaceholder }}"
                         >
                         <!-- Search indicator -->
                         <div class="absolute inset-y-0 right-0 left-auto flex items-center pr-3">
                             <div wire:loading.delay wire:target="search">
-                                <svg class="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <svg class="animate-spin h-5 w-5 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
@@ -36,91 +40,91 @@
                         </div>
                     </div>
                     @if($search)
-                        <div class="mt-2 text-sm text-gray-600">
+                        <div class="mt-2 text-sm text-gray-600 text-center">
                             Searching for: <span class="font-medium">{{ $search }}</span>
                         </div>
                     @endif
                 </div>
                 
-                <div class="flex items-baseline justify-between border-b border-gray-200 pb-6">
-                    <h1 class="text-3xl font-bold tracking-tight text-gray-900">Our Products</h1>
-                    
-                    <div class="flex items-center">
+                <!-- Filters control bar -->
+                <div class="flex flex-wrap items-center justify-between border-b border-gray-200 pb-6">
+                    <div class="flex items-center space-x-4">
                         <button 
                             wire:click="resetFilters" 
-                            class="mr-4 text-sm text-indigo-600 hover:text-indigo-800"
+                            class="text-sm text-slate-600 hover:text-slate-800 flex items-center space-x-1 transition duration-150"
                         >
-                            Reset All Filters
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <span>Reset Filters</span>
                         </button>
-                        
-                        <div class="relative inline-block text-left">
-                            <div>
-                                <select wire:model.live="sortBy" id="sort-by" class="rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
-                                    <option value="name">Name</option>
-                                    <option value="price">Price</option>
-                                    <option value="created_at">Newest</option>
-                                </select>
-                            </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm font-medium text-gray-700">Sort by:</span>
+                        <div class="relative inline-block">
+                            <select wire:model.live="sortBy" id="sort-by" class="rounded-md border-gray-200 py-1.5 pl-3 pr-10 text-sm focus:border-slate-500 focus:outline-none focus:ring-slate-500">
+                                <option value="name">Name</option>
+                                <option value="price">Price</option>
+                                <option value="created_at">Newest</option>
+                            </select>
                         </div>
                         
-                        <div class="ml-2">
-                            <button wire:click="$set('sortDirection', '{{ $sortDirection === 'asc' ? 'desc' : 'asc' }}')" type="button" class="p-2 text-gray-400 hover:text-gray-500">
-                                @if($sortDirection === 'asc')
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
-                                    </svg>
-                                @else
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                    </svg>
-                                @endif
-                            </button>
-                        </div>
+                        <button wire:click="$set('sortDirection', '{{ $sortDirection === 'asc' ? 'desc' : 'asc' }}')" type="button" class="p-1.5 text-gray-600 hover:text-gray-800 bg-white rounded-md border border-gray-200 shadow-sm transition duration-150 hover:border-gray-300">
+                            @if($sortDirection === 'asc')
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                                </svg>
+                            @else
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            @endif
+                        </button>
                     </div>
                 </div>
             </div>
 
             <div class="pt-6 pb-24">
-                <div class="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
-                    <!-- Filters -->
+                <div class="grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-5">
+                    <!-- Filters sidebar -->
                     <div class="lg:col-span-1">
-                        <div class="space-y-6">
-                            <!-- Category Filter -->
-                            <div>
+                        <div class="sticky top-6 bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="bg-slate-50 px-6 py-4 border-b border-gray-100">
                                 <h3 class="text-lg font-medium text-gray-900">Categories</h3>
-                                <ul class="mt-4 space-y-3">
-                                    <li wire:key="category-all">
+                            </div>
+                            <ul class="p-4 space-y-1.5">
+                                <li wire:key="category-all">
+                                    <button 
+                                        wire:click="clearCategory" 
+                                        class="flex items-center w-full py-2 px-3 rounded-md transition-colors duration-150 {{ !$selectedCategory ? 'bg-slate-100 text-slate-900 font-medium' : 'text-gray-700 hover:bg-gray-50' }}"
+                                    >
+                                        All Categories
+                                    </button>
+                                </li>
+                                @foreach($categories as $category)
+                                    <li wire:key="category-{{ $category->id }}">
                                         <button 
-                                            wire:click="clearCategory" 
-                                            class="flex items-center {{ !$selectedCategory ? 'text-indigo-600 font-medium' : 'text-gray-500' }}"
+                                            wire:click="selectCategory({{ $category->id }})" 
+                                            class="flex items-center justify-between w-full py-2 px-3 rounded-md transition-colors duration-150 {{ $selectedCategory == $category->id ? 'bg-slate-100 text-slate-900 font-medium' : 'text-gray-700 hover:bg-gray-50' }}"
                                         >
-                                            All Categories
+                                            <span>{{ $category->name }}</span>
+                                            @if($category->products_count)
+                                                <span class="text-xs font-medium {{ $selectedCategory == $category->id ? 'bg-slate-200 text-slate-800' : 'bg-gray-100 text-gray-600' }} rounded-full px-2.5 py-0.5">{{ $category->products_count }}</span>
+                                            @endif
                                         </button>
                                     </li>
-                                    @foreach($categories as $category)
-                                        <li wire:key="category-{{ $category->id }}">
-                                            <button 
-                                                wire:click="selectCategory({{ $category->id }})" 
-                                                class="flex items-center {{ $selectedCategory == $category->id ? 'text-indigo-600 font-medium' : 'text-gray-500' }}"
-                                            >
-                                                {{ $category->name }}
-                                                @if($category->products_count)
-                                                    <span class="ml-1 text-xs text-gray-400">({{ $category->products_count }})</span>
-                                                @endif
-                                            </button>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </div>
+                                @endforeach
+                            </ul>
                         </div>
                     </div>
 
                     <!-- Product grid -->
-                    <div class="lg:col-span-3">
+                    <div class="lg:col-span-4">
                         <!-- Loading indicator for the entire grid -->
                         <div wire:loading.delay class="w-full">
-                            <div class="flex justify-center items-center py-10">
-                                <svg class="animate-spin h-10 w-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <div class="flex justify-center items-center py-16">
+                                <svg class="animate-spin h-10 w-10 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
@@ -129,24 +133,50 @@
                         
                         <div wire:loading.delay.remove>
                             @if($products->count())
-                                <div class="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 xl:gap-x-8">
+                                <div class="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-10">
                                     @foreach($products as $product)
-                                        <div class="group relative bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
-                                            @if($product->image)
-                                                <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden bg-gray-200 xl:aspect-h-8 xl:aspect-w-7">
-                                                    <img src="{{ $product->image }}" alt="{{ $product->name }}" class="h-48 w-full object-cover object-center">
-                                                </div>
-                                            @else
-                                                <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden bg-gray-100 xl:aspect-h-8 xl:aspect-w-7">
-                                                    <div class="h-48 w-full flex items-center justify-center text-gray-500">
+                                        <div class="group relative bg-white overflow-hidden rounded-md shadow-sm transition-all duration-300 hover:shadow-md border border-gray-100">
+                                            <div class="aspect-h-1 aspect-w-1 w-full overflow-hidden bg-gray-50 xl:aspect-h-8 xl:aspect-w-7">
+                                                @if($product->image)
+                                                    <img src="{{ $product->image }}" alt="{{ $product->name }}" class="h-56 w-full object-cover object-center group-hover:scale-105 transition-transform duration-700">
+                                                @else
+                                                    <div class="h-56 w-full flex items-center justify-center text-gray-400 bg-gray-50">
                                                         <svg class="h-12 w-12" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                         </svg>
                                                     </div>
+                                                @endif
+                                                
+                                                <!-- Status badges -->
+                                                <div class="absolute top-3 right-3 flex flex-col space-y-1.5">
+                                                    @if($product->isOnSale())
+                                                        <span class="inline-flex items-center rounded-sm bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700 border border-red-100">
+                                                            Sale
+                                                        </span>
+                                                    @endif
+                                                    
+                                                    @if(!$product->isInStock())
+                                                        <span class="inline-flex items-center rounded-sm bg-gray-50 px-2.5 py-0.5 text-xs font-medium text-gray-700 border border-gray-100">
+                                                            Out of Stock
+                                                        </span>
+                                                    @endif
                                                 </div>
-                                            @endif
-                                            <div class="p-4">
-                                                <h3 class="text-base font-semibold text-gray-900">
+                                            </div>
+                                            
+                                            <div class="p-6">
+                                                <!-- Categories pills -->
+                                                @if($product->categories->count())
+                                                    <div class="mb-3 flex flex-wrap gap-1.5">
+                                                        @foreach($product->categories->take(3) as $category)
+                                                            <span class="inline-flex items-center rounded-sm bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700 border border-slate-100">
+                                                                {{ $category->name }}
+                                                            </span>
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+                                                
+                                                <!-- Product name -->
+                                                <h3 class="text-base font-medium text-gray-900 mb-3 font-serif">
                                                     @if($search)
                                                         {!! $this->highlightSearchTerm($product->name) !!}
                                                     @else
@@ -154,59 +184,41 @@
                                                     @endif
                                                 </h3>
                                                 
-                                                @if($product->categories->count())
-                                                    <div class="mt-1">
-                                                        @foreach($product->categories->take(3) as $category)
-                                                            <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 mr-1">
-                                                                {{ $category->name }}
-                                                            </span>
-                                                        @endforeach
-                                                    </div>
-                                                @endif
-                                                
-                                                <div class="mt-2 mb-4 flex items-center justify-between">
-                                                    <div>
-                                                        @if($product->isOnSale())
-                                                            <span class="text-lg font-medium text-gray-900">${{ number_format($product->sale_price, 2) }}</span>
+                                                <!-- Price display -->
+                                                <div class="mb-5">
+                                                    @if($product->isOnSale())
+                                                        <div class="flex items-baseline">
+                                                            <span class="text-lg font-semibold text-gray-900">${{ number_format($product->sale_price, 2) }}</span>
                                                             <span class="ml-2 text-sm text-gray-500 line-through">${{ number_format($product->price, 2) }}</span>
-                                                        @else
-                                                            <span class="text-lg font-medium text-gray-900">${{ number_format($product->price, 2) }}</span>
-                                                        @endif
-                                                    </div>
-                                                    
-                                                    <div>
-                                                        @if($product->isInStock())
-                                                            <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-                                                                In Stock
-                                                            </span>
-                                                        @else
-                                                            <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">
-                                                                Out of Stock
-                                                            </span>
-                                                        @endif
-                                                    </div>
+                                                        </div>
+                                                    @else
+                                                        <span class="text-lg font-semibold text-gray-900">${{ number_format($product->price, 2) }}</span>
+                                                    @endif
                                                 </div>
                                                 
+                                                <!-- Order form component -->
                                                 <livewire:shop.product-order-form :product="$product" :wire:key="'order-form-'.$product->id" />
                                             </div>
                                         </div>
                                     @endforeach
                                 </div>
                                 
-                                <div class="mt-8">
+                                <!-- Pagination -->
+                                <div class="mt-12">
                                     {{ $products->links() }}
                                 </div>
                             @else
-                                <div class="text-center py-12 bg-white rounded-lg shadow-sm border border-gray-200">
+                                <!-- No results state -->
+                                <div class="text-center py-16 bg-white rounded-md shadow-sm border border-gray-200">
                                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                         <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                                     </svg>
-                                    <h3 class="mt-2 text-lg font-medium text-gray-900">{{ $noResultsMessage }}</h3>
-                                    <div class="mt-6">
+                                    <h3 class="mt-3 text-lg font-medium text-gray-900 font-serif">{{ $noResultsMessage }}</h3>
+                                    <div class="mt-8 flex justify-center space-x-4">
                                         <button 
                                             type="button" 
                                             wire:click="$set('search', '')" 
-                                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
                                         >
                                             Reset Search
                                         </button>
@@ -215,7 +227,7 @@
                                             <button 
                                                 type="button" 
                                                 wire:click="clearCategory" 
-                                                class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
                                             >
                                                 Clear Category Filter
                                             </button>
