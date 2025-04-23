@@ -14,21 +14,14 @@ class ProductListing extends Component
 {
     use WithPagination;
     
-    // Using public properties with proper type declarations
+    // Public properties without URL tracking for AJAX-based filtering
     public string $search = '';
     public ?int $selectedCategory = null;
     public string $sortBy = 'name';
     public string $sortDirection = 'asc';
     public int $perPage = 12;
     public string $searchPlaceholder = 'Search by product name, description, or category...';
-    
-    // Track component state for better UX
-    protected $queryString = [
-        'search' => ['except' => ''],
-        'selectedCategory' => ['except' => null],
-        'sortBy' => ['except' => 'name'],
-        'sortDirection' => ['except' => 'asc']
-    ];
+    public bool $isLoading = false;
     
     /**
      * Initialize the component
@@ -36,6 +29,22 @@ class ProductListing extends Component
     public function mount(): void
     {
         $this->normalizeSelectedCategory();
+    }
+    
+    /**
+     * Before any update is performed, set loading state
+     */
+    public function updating($name, $value): void
+    {
+        $this->isLoading = true;
+    }
+    
+    /**
+     * After any property is updated, reset loading state
+     */
+    public function updated($name, $value): void
+    {
+        $this->isLoading = false;
     }
     
     /**
@@ -83,39 +92,63 @@ class ProductListing extends Component
     }
     
     /**
-     * Select a category for filtering
+     * Select a category for filtering using AJAX
      */
     public function selectCategory($categoryId): void
     {
+        $this->isLoading = true;
         $this->selectedCategory = is_numeric($categoryId) ? (int)$categoryId : null;
         $this->resetPage();
+        $this->isLoading = false;
     }
     
     /**
-     * Clear category filter
+     * Clear category filter using AJAX
      */
     public function clearCategory(): void
     {
+        $this->isLoading = true;
         $this->selectedCategory = null;
         $this->resetPage();
+        $this->isLoading = false;
     }
     
     /**
-     * Update the sort direction
+     * Update the sort direction using AJAX
      */
     public function toggleSortDirection(): void
     {
+        $this->isLoading = true;
         $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         $this->resetPage();
+        $this->isLoading = false;
     }
     
     /**
-     * Reset all filters and sorting options
+     * Update sort field using AJAX
+     */
+    public function updateSort(string $field): void
+    {
+        $this->isLoading = true;
+        if ($this->sortBy === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $field;
+            $this->sortDirection = 'asc';
+        }
+        $this->resetPage();
+        $this->isLoading = false;
+    }
+    
+    /**
+     * Reset all filters and sorting options using AJAX
      */
     public function resetFilters(): void
     {
+        $this->isLoading = true;
         $this->reset(['search', 'selectedCategory', 'sortBy', 'sortDirection']);
         $this->resetPage();
+        $this->isLoading = false;
     }
     
     /**
@@ -222,4 +255,5 @@ class ProductListing extends Component
         ]);
     }
 }
+
 

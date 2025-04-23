@@ -1,5 +1,23 @@
 <div>
-    <div class="bg-gradient-to-b from-slate-50 to-white">
+    <div class="bg-gradient-to-b from-slate-50 to-white" 
+        x-data="{ 
+            isLoading: @entangle('isLoading')
+        }"
+    >
+        <!-- Global loading overlay -->
+        <div 
+            wire:loading.delay.longer
+            class="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-50 flex items-center justify-center"
+        >
+            <div class="bg-white p-4 rounded-lg shadow-lg flex items-center space-x-4">
+                <svg class="animate-spin h-8 w-8 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-slate-800 font-medium">Loading...</span>
+            </div>
+        </div>
+
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <!-- Hero section with search -->
             <div class="pt-20 pb-10">
@@ -86,10 +104,14 @@
                     <div class="flex items-center space-x-4">
                         <span class="text-sm font-medium text-gray-700">Sort by:</span>
                         <div class="relative inline-block">
-                            <select wire:model.live="sortBy" id="sort-by" class="rounded-md border-gray-200 py-1.5 pl-3 pr-10 text-sm focus:border-slate-500 focus:outline-none focus:ring-slate-500">
-                                <option value="name">Name</option>
-                                <option value="price">Price</option>
-                                <option value="created_at">Newest</option>
+                            <select 
+                                wire:change="updateSort($event.target.value)" 
+                                id="sort-by" 
+                                class="rounded-md border-gray-200 py-1.5 pl-3 pr-10 text-sm focus:border-slate-500 focus:outline-none focus:ring-slate-500"
+                            >
+                                <option value="name" {{ $sortBy === 'name' ? 'selected' : '' }}>Name</option>
+                                <option value="price" {{ $sortBy === 'price' ? 'selected' : '' }}>Price</option>
+                                <option value="created_at" {{ $sortBy === 'created_at' ? 'selected' : '' }}>Newest</option>
                             </select>
                         </div>
                         
@@ -158,18 +180,8 @@
 
                     <!-- Product grid -->
                     <div class="lg:col-span-4">
-                        <!-- Loading indicator for the entire grid -->
-                        <div wire:loading.delay wire:target="search, selectedCategory, sortBy, sortDirection, resetFilters, clearCategory, selectCategory" class="w-full">
-                            <div class="flex justify-center items-center py-16">
-                                <svg class="animate-spin h-10 w-10 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        
                         <!-- Product grid content -->
-                        <div wire:loading.delay.remove wire:target="search, selectedCategory, sortBy, sortDirection, resetFilters, clearCategory, selectCategory">
+                        <div>
                             @if($products->count())
                                 <div class="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-10">
                                     @foreach($products as $product)
