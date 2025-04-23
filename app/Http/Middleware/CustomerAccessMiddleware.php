@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class CustomerAccessMiddleware
@@ -15,12 +16,12 @@ class CustomerAccessMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         // Check if user is authenticated and has customer role
-        if (auth()->check() && auth()->user()->role === User::ROLE_CUSTOMER) {
+        if (Auth::check() && Auth::user()->role === User::ROLE_CUSTOMER) {
             return $next($request);
         }
 
         // If not customer, redirect with error message
-        if (auth()->user() && auth()->user()->role === User::ROLE_ADMIN) {
+        if (Auth::check() && Auth::user()->role === User::ROLE_ADMIN) {
             // For admin users, redirect to admin dashboard
             return redirect()->route('filament.admin.pages.dashboard')->with('error', 'Admin users cannot access the customer dashboard.');
         }

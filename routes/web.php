@@ -6,12 +6,13 @@ use App\Livewire\Customer\OrderManagement;
 use App\Livewire\Customer\OrderDetail;
 use App\Livewire\Customer\ProfileManagement;
 use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\CustomerAccessMiddleware;
 
 // Make shop the default homepage
 Route::get('/', [ShopController::class, 'index'])->name('shop.index');
 
 // Customer routes protected by auth, verified, and customer middleware
-Route::middleware(['auth', 'verified', 'customer'])->group(function () {
+Route::middleware(['auth', 'verified', CustomerAccessMiddleware::class])->group(function () {
     // Customer dashboard routes
     Route::get('/customer/dashboard', CustomerDashboard::class)->name('customer.dashboard');
     Route::get('/customer/orders', OrderManagement::class)->name('customer.orders');

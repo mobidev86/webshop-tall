@@ -26,9 +26,25 @@
                 </div>
             </div>
         </div>
+    @elseif($loginRequired)
+        <div class="rounded-md bg-amber-50 p-4 mt-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-amber-800">Login required</h3>
+                    <div class="mt-2 text-sm text-amber-700">
+                        <p>You must be logged in to place an order. <a href="{{ route('login') }}" class="font-medium text-amber-800 underline">Click here to login</a>.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
     @elseif($showForm)
         <div class="bg-white p-4 border border-gray-200 rounded-md mt-4">
-            <h4 class="text-sm font-medium text-gray-900 mb-3">Order now</h4>
+            <h4 class="text-sm font-medium text-gray-900 mb-3">Confirm your order</h4>
             
             <form wire:submit.prevent="submitOrder">
                 @if(session()->has('error'))
@@ -91,113 +107,18 @@
                         @error('quantity') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="name" class="block text-sm font-medium leading-6 text-gray-900">Your Name*</label>
-                            <div class="mt-1">
-                                <input 
-                                    type="text" 
-                                    wire:model="name" 
-                                    id="name"
-                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                >
+                    <div class="mt-4">
+                        <div class="rounded-md bg-blue-50 p-4">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3 flex-1 md:flex md:justify-between">
+                                    <p class="text-sm text-blue-700">Your order will be shipped to your account address.</p>
+                                </div>
                             </div>
-                            @error('name') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                        
-                        <div>
-                            <label for="email" class="block text-sm font-medium leading-6 text-gray-900">Email Address*</label>
-                            <div class="mt-1">
-                                <input 
-                                    type="email" 
-                                    wire:model="email" 
-                                    id="email"
-                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                >
-                            </div>
-                            @error('email') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label for="phone" class="block text-sm font-medium leading-6 text-gray-900">Phone Number</label>
-                        <div class="mt-1">
-                            <input 
-                                type="tel" 
-                                wire:model="phone" 
-                                id="phone"
-                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                            >
-                        </div>
-                        @error('phone') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-                    </div>
-                    
-                    <div>
-                        <label for="address" class="block text-sm font-medium leading-6 text-gray-900">Shipping Address</label>
-                        <div class="mt-1">
-                            <input 
-                                type="text" 
-                                wire:model="address" 
-                                id="address"
-                                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                            >
-                        </div>
-                        @error('address') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="city" class="block text-sm font-medium leading-6 text-gray-900">City</label>
-                            <div class="mt-1">
-                                <input 
-                                    type="text" 
-                                    wire:model="city" 
-                                    id="city"
-                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                >
-                            </div>
-                            @error('city') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                        
-                        <div>
-                            <label for="state" class="block text-sm font-medium leading-6 text-gray-900">State/Province</label>
-                            <div class="mt-1">
-                                <input 
-                                    type="text" 
-                                    wire:model="state" 
-                                    id="state"
-                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                >
-                            </div>
-                            @error('state') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="zip" class="block text-sm font-medium leading-6 text-gray-900">Postal/ZIP Code</label>
-                            <div class="mt-1">
-                                <input 
-                                    type="text" 
-                                    wire:model="zip" 
-                                    id="zip"
-                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                >
-                            </div>
-                            @error('zip') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
-                        </div>
-                        
-                        <div>
-                            <label for="country" class="block text-sm font-medium leading-6 text-gray-900">Country</label>
-                            <div class="mt-1">
-                                <input 
-                                    type="text" 
-                                    wire:model="country" 
-                                    id="country"
-                                    class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                >
-                            </div>
-                            @error('country') <p class="mt-2 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
                     </div>
                     
@@ -231,17 +152,42 @@
             </form>
         </div>
     @else
-        <button 
-            wire:click="toggleForm"
-            type="button"
-            class="mt-2 w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            @if(!$product->isInStock()) disabled @endif
-        >
-            @if($product->isInStock())
-                Order Now
-            @else
-                Out of Stock
-            @endif
-        </button>
+        @if(Auth::check())
+            <button 
+                wire:click="directOrder"
+                type="button"
+                class="mt-2 w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                @if(!$product->isInStock()) disabled @endif
+                wire:loading.attr="disabled"
+                wire:loading.class="opacity-50 cursor-not-allowed"
+            >
+                <span wire:loading.remove wire:target="directOrder">
+                    @if($product->isInStock())
+                        Order Now
+                    @else
+                        Out of Stock
+                    @endif
+                </span>
+                <span wire:loading wire:target="directOrder">Processing...</span>
+            </button>
+            <div class="text-xs text-gray-500 mt-1 text-center">
+                <button wire:click="toggleForm" type="button" class="text-indigo-600 hover:text-indigo-800">
+                    Adjust quantity
+                </button>
+            </div>
+        @else
+            <button 
+                wire:click="toggleForm"
+                type="button"
+                class="mt-2 w-full rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                @if(!$product->isInStock()) disabled @endif
+            >
+                @if($product->isInStock())
+                    Order Now - Sign In Required
+                @else
+                    Out of Stock
+                @endif
+            </button>
+        @endif
     @endif
 </div>

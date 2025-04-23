@@ -128,36 +128,6 @@
                         </table>
                     </div>
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-gray-200 py-6">
-                    <div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Shipping Information</h3>
-                        <div class="text-sm text-gray-600">
-                            <p class="font-medium">{{ $order->shipping_name }}</p>
-                            <p>{{ $order->shipping_email }}</p>
-                            @if($order->shipping_phone)
-                                <p>{{ $order->shipping_phone }}</p>
-                            @endif
-                            <div class="mt-2">
-                                <p>{{ $order->getFormattedShippingAddress() }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-4">Billing Information</h3>
-                        <div class="text-sm text-gray-600">
-                            <p class="font-medium">{{ $order->billing_name }}</p>
-                            <p>{{ $order->billing_email }}</p>
-                            @if($order->billing_phone)
-                                <p>{{ $order->billing_phone }}</p>
-                            @endif
-                            <div class="mt-2">
-                                <p>{{ $order->getFormattedBillingAddress() }}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

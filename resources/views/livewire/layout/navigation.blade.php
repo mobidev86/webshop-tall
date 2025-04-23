@@ -2,6 +2,7 @@
 
 use App\Livewire\Actions\Logout;
 use Livewire\Volt\Component;
+use Illuminate\Support\Facades\Auth;
 
 new class extends Component
 {
@@ -36,11 +37,11 @@ new class extends Component
                     </x-nav-link>
                     
                     @auth
-                        @if(auth()->user()->role === 'admin')
+                        @if(Auth::user()->isAdmin())
                             <x-nav-link :href="route('filament.admin.pages.dashboard')" :active="request()->routeIs('filament.admin.pages.dashboard')" class="text-sm font-medium">
                                 {{ __('Admin Dashboard') }}
                             </x-nav-link>
-                        @elseif(auth()->user()->role === 'customer')
+                        @else
                             <x-nav-link :href="route('customer.dashboard')" :active="request()->routeIs('customer.dashboard')" wire:navigate class="text-sm font-medium">
                                 {{ __('Dashboard') }}
                             </x-nav-link>
@@ -81,9 +82,6 @@ new class extends Component
                             <div class="py-1 rounded-md bg-white shadow-xs">
                                 <a href="{{ route('profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150 ease-in-out" wire:navigate>
                                     Your Profile
-                                </a>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150 ease-in-out">
-                                    Settings
                                 </a>
                                 <button wire:click="logout" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition duration-150 ease-in-out">
                                     Sign out
@@ -153,11 +151,11 @@ new class extends Component
             </x-responsive-nav-link>
             
             @auth
-                @if(auth()->user()->role === 'admin')
+                @if(Auth::user()->isAdmin())
                     <x-responsive-nav-link :href="route('filament.admin.pages.dashboard')" :active="request()->routeIs('filament.admin.pages.dashboard')">
                         {{ __('Admin Dashboard') }}
                     </x-responsive-nav-link>
-                @elseif(auth()->user()->role === 'customer')
+                @else
                     <x-responsive-nav-link :href="route('customer.dashboard')" :active="request()->routeIs('customer.dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </x-responsive-nav-link>

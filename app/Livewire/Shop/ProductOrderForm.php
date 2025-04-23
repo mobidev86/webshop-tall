@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -15,48 +16,20 @@ class ProductOrderForm extends Component
     public Product $product;
     
     public $quantity = 1;
-    public $name = '';
-    public $email = '';
-    public $phone = '';
-    public $address = '';
-    public $city = '';
-    public $state = '';
-    public $zip = '';
-    public $country = '';
     
     public $showForm = false;
     public $orderComplete = false;
     public $orderNumber = '';
     public $processingOrder = false;
+    public $loginRequired = false;
     
     protected $rules = [
         'quantity' => 'required|integer|min:1',
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|max:255',
-        'phone' => 'nullable|string|max:20',
-        'address' => 'nullable|string|max:255',
-        'city' => 'nullable|string|max:100',
-        'state' => 'nullable|string|max:100',
-        'zip' => 'nullable|string|max:20',
-        'country' => 'nullable|string|max:100',
     ];
     
     public function mount(Product $product)
     {
         $this->product = $product;
-        
-        // Pre-fill fields if user is logged in
-        if (auth()->check()) {
-            $user = auth()->user();
-            $this->name = $user->name;
-            $this->email = $user->email;
-            $this->phone = $user->phone ?? '';
-            $this->address = $user->address ?? '';
-            $this->city = $user->city ?? '';
-            $this->state = $user->state ?? '';
-            $this->zip = $user->zip_code ?? '';
-            $this->country = $user->country ?? '';
-        }
     }
     
     public function incrementQuantity()
@@ -75,8 +48,16 @@ class ProductOrderForm extends Component
     
     public function toggleForm()
     {
+        // Check if user is logged in
+        if (!Auth::check()) {
+            // Set flag to show login required message
+            $this->loginRequired = true;
+            return;
+        }
+        
         $this->showForm = !$this->showForm;
         $this->orderComplete = false;
+        $this->loginRequired = false;
         
         // Reset validation errors when toggling form
         $this->resetValidation();
@@ -103,6 +84,12 @@ class ProductOrderForm extends Component
     
     public function submitOrder()
     {
+        // Check if user is logged in
+        if (!Auth::check()) {
+            $this->loginRequired = true;
+            return;
+        }
+        
         // Prevent double submission
         if ($this->processingOrder) {
             return;
@@ -138,54 +125,34 @@ class ProductOrderForm extends Component
                 throw new \Exception("Insufficient stock available. Only {$freshProduct->stock} units left.");
             }
             
-            // Find or create customer user
-            $customer = User::firstOrCreate(
-                ['email' => $this->email],
-                [
-                    'name' => $this->name,
-                    'password' => bcrypt(uniqid()), // Generate random password
-                    'role' => User::ROLE_CUSTOMER,
-                ]
-            );
-            
-            // Update customer info if fields are provided
-            $customerUpdated = false;
-            $customerData = [];
-            
-            if ($this->phone && $customer->phone !== $this->phone) {
-                $customerData['phone'] = $this->phone;
-                $customerUpdated = true;
-            }
-            
-            if ($customerUpdated) {
-                $customer->update($customerData);
-            }
+            // Get current user
+            $user = Auth::user();
             
             // Create order
             $order = Order::create([
-                'user_id' => auth()->id() ?? $customer->id, // Use logged in user ID or the customer we just created
+                'user_id' => $user->id,
                 'order_number' => Order::generateOrderNumber(),
                 'status' => Order::STATUS_PENDING,
                 'total_amount' => $freshProduct->getCurrentPrice() * $this->quantity,
                 
-                // Set shipping/billing info from form
-                'shipping_name' => $this->name,
-                'shipping_email' => $this->email,
-                'shipping_phone' => $this->phone,
-                'shipping_address' => $this->address,
-                'shipping_city' => $this->city,
-                'shipping_state' => $this->state,
-                'shipping_zip' => $this->zip,
-                'shipping_country' => $this->country,
+                // Set shipping/billing info from user
+                'shipping_name' => $user->name,
+                'shipping_email' => $user->email,
+                'shipping_phone' => $user->phone ?? '',
+                'shipping_address' => $user->address ?? '',
+                'shipping_city' => $user->city ?? '',
+                'shipping_state' => $user->state ?? '',
+                'shipping_zip' => $user->zip_code ?? '',
+                'shipping_country' => $user->country ?? '',
                 
-                'billing_name' => $this->name,
-                'billing_email' => $this->email,
-                'billing_phone' => $this->phone,
-                'billing_address' => $this->address,
-                'billing_city' => $this->city,
-                'billing_state' => $this->state,
-                'billing_zip' => $this->zip,
-                'billing_country' => $this->country,
+                'billing_name' => $user->name,
+                'billing_email' => $user->email,
+                'billing_phone' => $user->phone ?? '',
+                'billing_address' => $user->address ?? '',
+                'billing_city' => $user->city ?? '',
+                'billing_state' => $user->state ?? '',
+                'billing_zip' => $user->zip_code ?? '',
+                'billing_country' => $user->country ?? '',
             ]);
             
             // Create order item
@@ -218,7 +185,7 @@ class ProductOrderForm extends Component
             Log::error('Order creation failed: ' . $e->getMessage(), [
                 'product_id' => $this->product->id,
                 'quantity' => $this->quantity,
-                'user_email' => $this->email
+                'user_id' => Auth::id()
             ]);
             
             session()->flash('error', 'An error occurred while placing your order: ' . $e->getMessage());
@@ -226,6 +193,19 @@ class ProductOrderForm extends Component
         } finally {
             $this->processingOrder = false;
         }
+    }
+    
+    public function directOrder()
+    {
+        // Only allow logged-in users to place orders
+        if (!Auth::check()) {
+            $this->loginRequired = true;
+            return;
+        }
+        
+        // Set default quantity to 1 and submit the order
+        $this->quantity = 1;
+        $this->submitOrder();
     }
     
     public function render()
