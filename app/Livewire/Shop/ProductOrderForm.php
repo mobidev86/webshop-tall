@@ -25,10 +25,20 @@ class ProductOrderForm extends Component
     public bool $loginRequired = false;
     public bool $showEmailForm = false;
     public string $guestEmail = '';
+    public string $guestName = '';
+    public string $guestPhone = '';
+    public string $guestPassword = '';
+    public string $guestPasswordConfirmation = '';
+    public bool $userLoggedIn = false;
+    public bool $emailValid = false;
     
     protected array $rules = [
         'quantity' => 'required|integer|min:1',
         'guestEmail' => 'sometimes|required|email',
+        'guestName' => 'sometimes|required|string|max:255',
+        'guestPhone' => 'sometimes|nullable|string|max:20',
+        'guestPassword' => 'sometimes|required|min:8',
+        'guestPasswordConfirmation' => 'sometimes|required|same:guestPassword',
     ];
     
     public function mount(Product $product): void
@@ -77,6 +87,16 @@ class ProductOrderForm extends Component
         if ($propertyName === 'quantity') {
             $this->normalizeQuantity();
         }
+        
+        // Validate email format and check if it already exists
+        if ($propertyName === 'guestEmail') {
+            if (empty($this->guestEmail)) {
+                $this->resetErrorBag('guestEmail');
+                $this->emailValid = false;
+            } else {
+                $this->validateEmail();
+            }
+        }
     }
     
     /**
@@ -95,12 +115,41 @@ class ProductOrderForm extends Component
         }
     }
     
+    /**
+     * Validate email in real-time
+     */
+    private function validateEmail(): void
+    {
+        // Reset validation state
+        $this->emailValid = false;
+        
+        // First check basic email format
+        if (!filter_var($this->guestEmail, FILTER_VALIDATE_EMAIL)) {
+            $this->addError('guestEmail', 'Please enter a valid email address.');
+            return;
+        }
+        
+        // Check if email exists in the database
+        $existingUser = User::where('email', $this->guestEmail)->first();
+        if ($existingUser) {
+            $this->addError('guestEmail', 'This email is already registered. Please login or use a different email.');
+            return;
+        }
+        
+        // Email is valid and not taken
+        $this->emailValid = true;
+    }
+    
     public function submitOrder(): void
     {
         // Allow guest checkout with email
         if (!Auth::check() && $this->showEmailForm) {
             $this->validate([
                 'guestEmail' => 'required|email',
+                'guestName' => 'required|string|max:255',
+                'guestPhone' => 'nullable|string|max:20',
+                'guestPassword' => 'required|min:8',
+                'guestPasswordConfirmation' => 'required|same:guestPassword',
                 'quantity' => 'required|integer|min:1',
             ]);
         } 
@@ -187,13 +236,20 @@ class ProductOrderForm extends Component
             // Update local product stock to reflect the change
             $this->product = $freshProduct;
             
-            // For guest users, show confirmation without redirecting to account page
+            // For guest users who just registered and logged in
+            if (Auth::check() && !empty($this->guestEmail)) {
+                // Redirect to orders page for newly registered and logged in users
+                redirect()->route('customer.orders')->with('success', "Order #{$order->order_number} placed successfully!");
+                return;
+            }
+            
+            // For guest users who are still not logged in
             if (!Auth::check()) {
                 $this->handleOrderSuccess($order->order_number);
                 return;
             }
             
-            // Redirect to orders page for logged in users
+            // For regular logged in users (not new registrations)
             redirect()->route('customer.orders')->with('success', "Order #{$order->order_number} placed successfully!");
             
         } catch (\Exception $e) {
@@ -209,21 +265,24 @@ class ProductOrderForm extends Component
     {
         // Check if this email belongs to an existing user
         $existingUser = User::where('email', $this->guestEmail)->first();
+        $newUserCreated = false;
         
         // Create a temporary user if the email doesn't exist
         if (!$existingUser) {
-            $tempPassword = "password";
             $existingUser = User::create([
-                'name' => 'Guest User',
+                'name' => $this->guestName,
                 'email' => $this->guestEmail,
-                'password' => bcrypt($tempPassword),
+                'phone' => $this->guestPhone,
+                'password' => bcrypt($this->guestPassword),
                 'role' => User::ROLE_CUSTOMER,
-                'is_temporary' => true,
+                'is_temporary' => false,  // No longer temporary since we have complete info
                 'is_active' => true,
             ]);
+            $newUserCreated = true;
         }
         
-        return Order::create([
+        // Create the order
+        $order = Order::create([
             // Link to existing or newly created temporary user
             'user_id' => $existingUser->id,
             'order_number' => Order::generateOrderNumber(),
@@ -250,6 +309,14 @@ class ProductOrderForm extends Component
             'billing_zip' => $existingUser->zip_code ?? '',
             'billing_country' => $existingUser->country ?? '',
         ]);
+        
+        // Log in the newly created user
+        if ($newUserCreated) {
+            Auth::login($existingUser);
+            $this->userLoggedIn = true;
+        }
+        
+        return $order;
     }
     
     /**
@@ -305,7 +372,15 @@ class ProductOrderForm extends Component
      */
     private function handleOrderSuccess(string $orderNumber): void
     {
-        $this->reset(['quantity', 'showForm', 'showEmailForm', 'guestEmail']);
+        // Remember the logged in flag
+        $wasUserLoggedIn = $this->userLoggedIn;
+        
+        // Reset all form fields but keep logged in status
+        $this->reset(['quantity', 'showForm', 'showEmailForm', 'guestEmail', 'guestName', 'guestPhone', 'guestPassword', 'guestPasswordConfirmation']);
+        
+        // Restore the logged in status
+        $this->userLoggedIn = $wasUserLoggedIn;
+        
         $this->quantity = 1;
         $this->orderComplete = true;
         $this->orderNumber = $orderNumber;
