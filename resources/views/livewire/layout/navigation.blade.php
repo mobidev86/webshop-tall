@@ -25,7 +25,6 @@ new class extends Component
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('shop.index') }}" wire:navigate class="flex items-center">
-                        <x-application-logo class="block h-9 w-auto fill-current text-indigo-600" />
                         <span class="ml-2 text-xl font-bold text-gray-900">WebShop</span>
                     </a>
                 </div>
