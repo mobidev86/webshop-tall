@@ -222,11 +222,12 @@ class OrderResource extends Resource
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         Order::STATUS_PENDING => 'gray',
-                        Order::STATUS_PROCESSING => 'blue',
-                        Order::STATUS_COMPLETED => 'green',
-                        Order::STATUS_DECLINED => 'red',
-                        Order::STATUS_CANCELLED => 'orange',
+                        Order::STATUS_PROCESSING => 'info',
+                        Order::STATUS_COMPLETED => 'success',
+                        Order::STATUS_DECLINED => 'warning',
+                        Order::STATUS_CANCELLED => 'danger',
                     })
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state))
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('items_count')
