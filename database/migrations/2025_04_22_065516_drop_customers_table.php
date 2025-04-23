@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Check if orders table has customer_id column 
+        // Check if orders table has customer_id column
         if (Schema::hasColumn('orders', 'customer_id')) {
             // Check if the foreign key exists
             $foreignKeys = DB::select("
@@ -22,18 +22,18 @@ return new class extends Migration
                 AND table_name = 'orders'
                 AND constraint_name = 'orders_customer_id_foreign'
             ");
-            
-            if (!empty($foreignKeys)) {
+
+            if (! empty($foreignKeys)) {
                 Schema::table('orders', function (Blueprint $table) {
                     $table->dropForeign(['customer_id']);
                 });
             }
-            
+
             Schema::table('orders', function (Blueprint $table) {
                 $table->dropColumn('customer_id');
             });
         }
-        
+
         Schema::dropIfExists('customers');
     }
 
@@ -57,7 +57,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
         });
-        
+
         // Add the customer_id column back to orders
         Schema::table('orders', function (Blueprint $table) {
             $table->foreignId('customer_id')->nullable()->after('user_id')->constrained()->nullOnDelete();

@@ -4,21 +4,23 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory;
+    use Notifiable;
 
     /**
      * Role constants
      */
     public const ROLE_ADMIN = 'admin';
+
     public const ROLE_CUSTOMER = 'customer';
-    
+
     /**
      * Valid user roles
      */
@@ -92,7 +94,7 @@ class User extends Authenticatable
     {
         return $this->hasMany(Order::class);
     }
-    
+
     /**
      * Get user's full address as a string
      */
@@ -103,12 +105,12 @@ class User extends Authenticatable
             $this->city,
             $this->state,
             $this->zip_code,
-            $this->country
+            $this->country,
         ]);
-        
+
         return implode(', ', $parts);
     }
-    
+
     /**
      * Scope query to only include active users
      */
@@ -116,7 +118,7 @@ class User extends Authenticatable
     {
         return $query->where('is_active', true);
     }
-    
+
     /**
      * Scope query to only include admin users
      */
@@ -124,7 +126,7 @@ class User extends Authenticatable
     {
         return $query->where('role', self::ROLE_ADMIN);
     }
-    
+
     /**
      * Scope query to only include customer users
      */

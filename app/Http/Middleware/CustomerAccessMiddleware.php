@@ -29,4 +29,4 @@ class CustomerAccessMiddleware
         // For other users or guests
         return redirect()->route('shop.index')->with('error', 'You do not have permission to access the customer area.');
     }
-} 
+}

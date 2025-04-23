@@ -7,7 +7,6 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 class ChildrenRelationManager extends RelationManager
@@ -25,14 +24,14 @@ class ChildrenRelationManager extends RelationManager
                     ->maxLength(255)
                     ->live(onBlur: true)
                     ->afterStateUpdated(fn (string $context, $state, callable $set) => $context === 'create' ? $set('slug', Str::slug($state)) : null),
-                
+
                 Forms\Components\TextInput::make('slug')
                     ->required()
                     ->maxLength(255),
-                
+
                 Forms\Components\Textarea::make('description')
                     ->maxLength(65535),
-                
+
                 Forms\Components\Toggle::make('is_active')
                     ->label('Active')
                     ->default(true),
@@ -72,4 +71,4 @@ class ChildrenRelationManager extends RelationManager
                 ]),
             ]);
     }
-} 
+}

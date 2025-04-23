@@ -4,8 +4,8 @@ namespace App\Livewire\Customer;
 
 use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Livewire\Component;
 
 #[Layout('layouts.app')]
 class Dashboard extends Component
@@ -13,7 +13,7 @@ class Dashboard extends Component
     public function getOrderStatsProperty()
     {
         $user = Auth::user();
-        
+
         return [
             'total' => Order::where('user_id', $user->id)->count(),
             'pending' => Order::where('user_id', $user->id)->where('status', 'pending')->count(),
@@ -22,7 +22,7 @@ class Dashboard extends Component
             'cancelled' => Order::where('user_id', $user->id)->where('status', 'cancelled')->count(),
         ];
     }
-    
+
     public function getRecentOrdersProperty()
     {
         return Order::where('user_id', Auth::id())
@@ -30,12 +30,12 @@ class Dashboard extends Component
             ->limit(5)
             ->get();
     }
-    
+
     public function render()
     {
         return view('livewire.customer.dashboard', [
             'orderStats' => $this->orderStats,
-            'recentOrders' => $this->recentOrders
+            'recentOrders' => $this->recentOrders,
         ]);
     }
 }

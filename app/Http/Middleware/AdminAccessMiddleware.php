@@ -22,4 +22,4 @@ class AdminAccessMiddleware
         // If not admin, redirect to dashboard with error message
         return redirect()->route('dashboard')->with('error', 'You do not have permission to access the admin area.');
     }
-} 
+}

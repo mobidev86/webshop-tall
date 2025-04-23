@@ -5,29 +5,25 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Resources\OrderResource\RelationManagers;
 use App\Models\Order;
-use App\Models\User;
 use App\Models\Product;
-use App\Models\OrderItem;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
-    
+
     protected static ?string $navigationGroup = 'Shop';
-    
+
     protected static ?int $navigationSort = 3;
-    
+
     protected static ?string $recordTitleAttribute = 'order_number';
 
     public static function form(Form $form): Form
@@ -41,7 +37,7 @@ class OrderResource extends Resource
                             ->disabled()
                             ->dehydrated()
                             ->required(),
-                        
+
                         Forms\Components\Select::make('user_id')
                             ->relationship('user', 'name', function (Builder $query) {
                                 return $query->where('role', User::ROLE_CUSTOMER);
@@ -49,7 +45,7 @@ class OrderResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required(),
-                        
+
                         Forms\Components\Select::make('status')
                             ->options([
                                 Order::STATUS_PENDING => 'Pending',
@@ -72,7 +68,7 @@ class OrderResource extends Resource
                                 }
                             })
                             ->required(),
-                        
+
                         Forms\Components\TextInput::make('total_amount')
                             ->numeric()
                             ->prefix('$')
@@ -81,7 +77,7 @@ class OrderResource extends Resource
                             ->required(),
                     ])
                     ->columns(2),
-                    
+
                 Forms\Components\Section::make('Order Items')
                     ->schema([
                         Forms\Components\Repeater::make('items')
@@ -101,21 +97,21 @@ class OrderResource extends Resource
                                             $product = Product::find($state);
                                             if ($product) {
                                                 // Get the current price from the product
-                                                $price = (float)$product->getCurrentPrice();
-                                                
+                                                $price = (float) $product->getCurrentPrice();
+
                                                 // Set the product details in the form
                                                 $set('product_name', $product->name);
                                                 $set('price', $price);
                                                 $set('available_stock', $product->stock);
-                                                
+
                                                 // Set the initial quantity
                                                 $quantity = 1; // Default quantity
                                                 $set('quantity', $quantity);
-                                                
+
                                                 // Calculate and set the subtotal
                                                 $subtotal = $price * $quantity;
                                                 $set('subtotal', $subtotal);
-                                                
+
                                                 // Force a form update to recalculate the total
                                                 if (method_exists($livewire, 'dispatch')) {
                                                     $livewire->dispatch('recalculate-total');
@@ -123,17 +119,17 @@ class OrderResource extends Resource
                                             }
                                         }
                                     }),
-                                    
+
                                 Forms\Components\TextInput::make('product_name')
                                     ->required()
                                     ->disabled()
                                     ->dehydrated(),
-                                
+
                                 Forms\Components\TextInput::make('available_stock')
                                     ->label('Available Stock')
                                     ->disabled()
                                     ->dehydrated(false),
-                                
+
                                 Forms\Components\TextInput::make('quantity')
                                     ->numeric()
                                     ->default(1)
@@ -143,20 +139,20 @@ class OrderResource extends Resource
                                     ->afterStateUpdated(function (callable $set, $state, $get, $livewire) {
                                         // Ensure we have a valid price and quantity
                                         $price = $get('price');
-                                        $price = (null !== $price && is_numeric($price)) 
-                                            ? (float)$price 
+                                        $price = ($price !== null && is_numeric($price))
+                                            ? (float) $price
                                             : 0;
-                                            
-                                        $quantity = (null !== $state && is_numeric($state)) 
-                                            ? (int)$state 
+
+                                        $quantity = ($state !== null && is_numeric($state))
+                                            ? (int) $state
                                             : 0;
-                                        
+
                                         // Calculate the subtotal
                                         $subtotal = $price * $quantity;
-                                        
+
                                         // Set the subtotal back to the form
                                         $set('subtotal', $subtotal);
-                                        
+
                                         // Validate against available stock
                                         $productId = $get('product_id');
                                         if ($productId) {
@@ -165,19 +161,19 @@ class OrderResource extends Resource
                                                 // Adjust quantity to available stock
                                                 $quantity = $product->stock;
                                                 $set('quantity', $quantity);
-                                                
+
                                                 // Recalculate subtotal
                                                 $subtotal = $price * $quantity;
                                                 $set('subtotal', $subtotal);
                                             }
                                         }
-                                        
+
                                         // Force a form update to recalculate the total
                                         if (method_exists($livewire, 'dispatch')) {
                                             $livewire->dispatch('recalculate-total');
                                         }
                                     }),
-                                
+
                                 Forms\Components\TextInput::make('price')
                                     ->numeric()
                                     ->prefix('$')
@@ -185,7 +181,7 @@ class OrderResource extends Resource
                                     ->required()
                                     ->disabled()
                                     ->dehydrated(),
-                                
+
                                 Forms\Components\TextInput::make('subtotal')
                                     ->numeric()
                                     ->prefix('$')
@@ -212,12 +208,12 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('order_number')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Customer')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -229,7 +225,7 @@ class OrderResource extends Resource
                     })
                     ->formatStateUsing(fn (string $state): string => ucfirst($state))
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('items_count')
                     ->label('Items')
                     ->getStateUsing(fn (Order $record): int => $record->itemsCount())
@@ -240,11 +236,11 @@ class OrderResource extends Resource
                             ->groupBy('orders.id')
                             ->orderBy('items_count', $direction);
                     }),
-                
+
                 Tables\Columns\TextColumn::make('total_amount')
                     ->money('USD')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
@@ -258,12 +254,12 @@ class OrderResource extends Resource
                         Order::STATUS_DECLINED => 'Declined',
                         Order::STATUS_CANCELLED => 'Cancelled',
                     ]),
-                
+
                 Tables\Filters\SelectFilter::make('user_id')
                     ->relationship('user', 'name')
                     ->searchable()
                     ->label('Customer'),
-                    
+
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         Forms\Components\DatePicker::make('created_from'),
@@ -331,47 +327,47 @@ class OrderResource extends Resource
 
     /**
      * Calculate the total amount from all order items
-     * 
-     * @param Forms\Get $get The Filament form's Get object
-     * @param Forms\Set $set The Filament form's Set object
+     *
+     * @param  Forms\Get  $get  The Filament form's Get object
+     * @param  Forms\Set  $set  The Filament form's Set object
      * @return float The calculated total amount
      */
     private static function calculateOrderTotal(Forms\Get $get, Forms\Set $set): float
     {
         // Get all items
         $items = $get('items');
-        
+
         // Start with zero total
         $total = 0;
-        
+
         // Calculate total from all items
         if (is_array($items)) {
             foreach ($items as $index => $item) {
                 // Get quantity and price, with safe defaults
                 $quantity = 0;
                 if (array_key_exists('quantity', $item) && is_numeric($item['quantity'])) {
-                    $quantity = (int)$item['quantity'];
+                    $quantity = (int) $item['quantity'];
                 }
-                    
+
                 $price = 0;
                 if (array_key_exists('price', $item) && is_numeric($item['price'])) {
-                    $price = (float)$item['price'];
+                    $price = (float) $item['price'];
                 }
-                
+
                 // Calculate this item's subtotal
                 $itemTotal = $price * $quantity;
-                
+
                 // Add to the running total
                 $total += $itemTotal;
             }
         }
-        
+
         // Format the total amount to 2 decimal places
         $formattedTotal = number_format($total, 2, '.', '');
-        
+
         // Update the total_amount field with the formatted total
         $set('total_amount', $formattedTotal);
-        
+
         return $total;
     }
 }

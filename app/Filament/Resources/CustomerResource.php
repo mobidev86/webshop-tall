@@ -11,20 +11,19 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class CustomerResource extends Resource
 {
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
-    
+
     protected static ?string $navigationGroup = 'Shop';
-    
+
     protected static ?int $navigationSort = 2;
-    
+
     protected static ?string $recordTitleAttribute = 'name';
-    
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('role', User::ROLE_CUSTOMER);
@@ -39,28 +38,28 @@ class CustomerResource extends Resource
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255),
-                            
+
                         Forms\Components\TextInput::make('email')
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
-                            
+
                         Forms\Components\TextInput::make('password')
                             ->password()
                             ->dehydrated(fn ($state) => filled($state))
                             ->required(fn (string $context): bool => $context === 'create')
                             ->maxLength(255)
                             ->visible(fn (string $context): bool => $context === 'create'),
-                            
+
                         Forms\Components\TextInput::make('phone')
                             ->tel()
                             ->maxLength(255),
-                            
+
                         Forms\Components\Toggle::make('is_active')
                             ->label('Active')
                             ->default(true),
-                            
+
                         Forms\Components\Hidden::make('role')
                             ->default(User::ROLE_CUSTOMER),
                     ])
@@ -75,23 +74,23 @@ class CustomerResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('phone')
                     ->searchable(),
-                    
+
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('orders_count')
                     ->counts('orders')
                     ->label('Orders')
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

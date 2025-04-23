@@ -2,24 +2,27 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
     use HasFactory;
-    
+
     // Order status constants
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_PROCESSING = 'processing';
+
     public const STATUS_COMPLETED = 'completed';
+
     public const STATUS_DECLINED = 'declined';
+
     public const STATUS_CANCELLED = 'cancelled';
-    
+
     /**
      * Array of valid order statuses
      */
@@ -30,7 +33,7 @@ class Order extends Model
         self::STATUS_DECLINED,
         self::STATUS_CANCELLED,
     ];
-    
+
     /**
      * Statuses that allow cancellation
      */
@@ -38,7 +41,7 @@ class Order extends Model
         self::STATUS_PENDING,
         self::STATUS_PROCESSING,
     ];
-    
+
     protected $fillable = [
         'order_number',
         'user_id',
@@ -66,13 +69,13 @@ class Order extends Model
         'billing_zip',
         'billing_country',
     ];
-    
+
     protected $casts = [
         'total_amount' => 'float',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
-    
+
     /**
      * Generate unique order number
      */
@@ -81,10 +84,10 @@ class Order extends Model
         do {
             $orderNumber = 'ORD-' . strtoupper(substr(uniqid(), 0, 8));
         } while (self::where('order_number', $orderNumber)->exists());
-        
+
         return $orderNumber;
     }
-    
+
     /**
      * Relationship with user
      */
@@ -92,7 +95,7 @@ class Order extends Model
     {
         return $this->belongsTo(User::class);
     }
-    
+
     /**
      * Relationship with order items
      */
@@ -100,7 +103,7 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
-    
+
     /**
      * Get order items count
      */
@@ -108,7 +111,7 @@ class Order extends Model
     {
         return (int) $this->items()->sum('quantity');
     }
-    
+
     /**
      * Method to calculate the total amount from all order items
      * and update the order's total_amount attribute
@@ -118,17 +121,17 @@ class Order extends Model
         $total = $this->items()
             ->select(DB::raw('SUM(price * quantity) as total'))
             ->value('total') ?? 0;
-        
+
         // Convert to float
         $total = (float) $total;
-        
+
         // Update the order model
         $this->total_amount = $total;
         $this->save();
-        
+
         return $total;
     }
-    
+
     /**
      * Check if the order can be cancelled
      */
@@ -136,21 +139,21 @@ class Order extends Model
     {
         return in_array($this->status, self::CANCELLABLE_STATUSES, true);
     }
-    
+
     /**
      * Cancel the order and restore product stock
      */
     public function cancel(): bool
     {
-        if (!$this->canBeCancelled()) {
+        if (! $this->canBeCancelled()) {
             return false;
         }
-        
+
         DB::transaction(function () {
             // Update order status
             $this->status = self::STATUS_CANCELLED;
             $this->save();
-            
+
             // Restore product stock
             foreach ($this->items as $item) {
                 if ($item->product) {
@@ -158,10 +161,10 @@ class Order extends Model
                 }
             }
         });
-        
+
         return true;
     }
-    
+
     /**
      * Get formatted shipping address
      */
@@ -172,12 +175,12 @@ class Order extends Model
             $this->shipping_city,
             $this->shipping_state,
             $this->shipping_zip,
-            $this->shipping_country
+            $this->shipping_country,
         ]);
-        
+
         return implode(', ', $parts);
     }
-    
+
     /**
      * Get formatted billing address
      */
@@ -188,12 +191,12 @@ class Order extends Model
             $this->billing_city,
             $this->billing_state,
             $this->billing_zip,
-            $this->billing_country
+            $this->billing_country,
         ]);
-        
+
         return implode(', ', $parts);
     }
-    
+
     /**
      * Get status label with proper formatting
      */
@@ -201,7 +204,7 @@ class Order extends Model
     {
         return ucfirst($this->status);
     }
-    
+
     /**
      * Scope for finding orders by status
      */
@@ -209,7 +212,7 @@ class Order extends Model
     {
         return $query->where('status', $status);
     }
-    
+
     /**
      * Scope for finding orders by user
      */

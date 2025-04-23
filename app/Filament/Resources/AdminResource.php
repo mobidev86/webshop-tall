@@ -16,23 +16,23 @@ class AdminResource extends Resource
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user';
-    
+
     protected static ?string $navigationGroup = 'System';
-    
+
     protected static ?int $navigationSort = 1;
-    
+
     protected static ?string $recordTitleAttribute = 'name';
-    
+
     public static function getNavigationLabel(): string
     {
         return 'Administrators';
     }
-    
+
     public static function getPluralLabel(): string
     {
         return 'Administrators';
     }
-    
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('role', User::ROLE_ADMIN);
@@ -47,23 +47,23 @@ class AdminResource extends Resource
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255),
-                            
+
                         Forms\Components\TextInput::make('email')
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
-                            
+
                         Forms\Components\TextInput::make('password')
                             ->password()
                             ->dehydrated(fn ($state) => filled($state))
                             ->required(fn (string $context): bool => $context === 'create')
                             ->maxLength(255),
-                            
+
                         Forms\Components\Toggle::make('is_active')
                             ->label('Active')
                             ->default(true),
-                            
+
                         Forms\Components\Hidden::make('role')
                             ->default(User::ROLE_ADMIN),
                     ])
@@ -78,15 +78,15 @@ class AdminResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('email')
                     ->searchable()
                     ->sortable(),
-                    
+
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -120,4 +120,4 @@ class AdminResource extends Resource
             'edit' => Pages\EditAdmin::route('/{record}/edit'),
         ];
     }
-} 
+}

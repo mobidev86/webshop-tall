@@ -17,12 +17,12 @@ class EditCustomer extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
-    
+
     protected function mutateFormDataBeforeSave(array $data): array
     {
         // Ensure role is always customer, in case it's changed
         $data['role'] = User::ROLE_CUSTOMER;
-        
+
         return $data;
     }
 }

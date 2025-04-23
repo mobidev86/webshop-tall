@@ -39,7 +39,7 @@ return new class extends Migration
                 'zip_code',
                 'country',
                 'is_active',
-                'notes'
+                'notes',
             ]);
         });
     }

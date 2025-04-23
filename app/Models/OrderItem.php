@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class OrderItem extends Model
 {
     use HasFactory;
-    
+
     protected $fillable = [
         'order_id',
         'product_id',
@@ -18,7 +18,7 @@ class OrderItem extends Model
         'price',
         'subtotal',
     ];
-    
+
     protected $casts = [
         'order_id' => 'integer',
         'product_id' => 'integer',
@@ -26,7 +26,7 @@ class OrderItem extends Model
         'price' => 'decimal:2',
         'subtotal' => 'decimal:2',
     ];
-    
+
     /**
      * Relationship with order
      */
@@ -34,7 +34,7 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Order::class);
     }
-    
+
     /**
      * Relationship with product
      */
@@ -42,7 +42,7 @@ class OrderItem extends Model
     {
         return $this->belongsTo(Product::class);
     }
-    
+
     /**
      * Calculate subtotal
      */
@@ -50,7 +50,7 @@ class OrderItem extends Model
     {
         return (float) ($this->price * $this->quantity);
     }
-    
+
     /**
      * Update subtotal when saving a new record
      */
@@ -61,14 +61,14 @@ class OrderItem extends Model
                 $orderItem->subtotal = $orderItem->calculateSubtotal();
             }
         });
-        
+
         static::updating(function ($orderItem) {
             if ($orderItem->isDirty(['price', 'quantity'])) {
                 $orderItem->subtotal = $orderItem->calculateSubtotal();
             }
         });
     }
-    
+
     /**
      * Get formatted price
      */
@@ -76,7 +76,7 @@ class OrderItem extends Model
     {
         return '$' . number_format((float) $this->price, 2);
     }
-    
+
     /**
      * Get formatted subtotal
      */

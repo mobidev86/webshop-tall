@@ -10,7 +10,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
 
 class CategoryResource extends Resource
@@ -18,9 +17,9 @@ class CategoryResource extends Resource
     protected static ?string $model = Category::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
-    
+
     protected static ?string $navigationGroup = 'Shop';
-    
+
     protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
@@ -34,27 +33,27 @@ class CategoryResource extends Resource
                             ->maxLength(255)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn (string $context, $state, callable $set) => $context === 'create' ? $set('slug', Str::slug($state)) : null),
-                    
+
                         Forms\Components\TextInput::make('slug')
                             ->required()
                             ->maxLength(255)
                             ->unique(Category::class, 'slug', ignoreRecord: true),
-                        
+
                         Forms\Components\Textarea::make('description')
                             ->maxLength(65535)
                             ->columnSpan('full'),
-                        
+
                         Forms\Components\Select::make('parent_id')
                             ->label('Parent Category')
                             ->relationship('parent', 'name')
                             ->searchable()
                             ->preload(),
-                        
+
                         Forms\Components\Toggle::make('is_active')
                             ->label('Active')
                             ->default(true),
                     ])
-                    ->columns(2)
+                    ->columns(2),
             ]);
     }
 

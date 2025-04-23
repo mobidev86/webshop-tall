@@ -21,4 +21,4 @@ class AdminProfileRestrictMiddleware
 
         return $next($request);
     }
-} 
+}

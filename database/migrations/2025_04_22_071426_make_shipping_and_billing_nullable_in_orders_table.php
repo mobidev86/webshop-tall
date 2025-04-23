@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('shipping_city')->nullable()->change();
             $table->string('shipping_zip')->nullable()->change();
             $table->string('shipping_country')->nullable()->change();
-            
+
             // Make billing fields nullable
             $table->string('billing_name')->nullable()->change();
             $table->string('billing_email')->nullable()->change();
@@ -46,7 +46,7 @@ return new class extends Migration
             $table->string('shipping_city')->nullable(false)->change();
             $table->string('shipping_zip')->nullable(false)->change();
             $table->string('shipping_country')->nullable(false)->change();
-            
+
             // Revert billing fields to required
             $table->string('billing_name')->nullable(false)->change();
             $table->string('billing_email')->nullable(false)->change();

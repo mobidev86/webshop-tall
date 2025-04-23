@@ -2,11 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\Category;
 use App\Models\Product;
-use Illuminate\Support\Str;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -26,12 +25,12 @@ class DatabaseSeeder extends Seeder
                 'is_active' => true,
             ]
         );
-        
+
         // Update role if the admin user already existed
-        if (!$admin->wasRecentlyCreated && $admin->role !== User::ROLE_ADMIN) {
+        if (! $admin->wasRecentlyCreated && $admin->role !== User::ROLE_ADMIN) {
             $admin->update(['role' => User::ROLE_ADMIN]);
         }
-        
+
         // Create sample customer users
         $customers = [
             [
@@ -84,7 +83,7 @@ class DatabaseSeeder extends Seeder
                 $customerData
             );
         }
-        
+
         // Create categories
         $categories = [
             [
@@ -106,14 +105,14 @@ class DatabaseSeeder extends Seeder
                 'is_active' => true,
             ],
         ];
-        
+
         foreach ($categories as $categoryData) {
             Category::firstOrCreate(
                 ['slug' => $categoryData['slug']],
                 $categoryData
             );
         }
-        
+
         // Create sub-categories
         $subCategories = [
             [
@@ -145,14 +144,14 @@ class DatabaseSeeder extends Seeder
                 'is_active' => true,
             ],
         ];
-        
+
         foreach ($subCategories as $categoryData) {
             Category::firstOrCreate(
                 ['slug' => $categoryData['slug']],
                 $categoryData
             );
         }
-        
+
         // Create products and associate with categories
         $products = [
             [
@@ -218,16 +217,16 @@ class DatabaseSeeder extends Seeder
                 'categories' => ['womens-clothing', 'clothing'],
             ],
         ];
-        
+
         foreach ($products as $productData) {
             $categories = $productData['categories'];
             unset($productData['categories']);
-            
+
             $product = Product::firstOrCreate(
                 ['slug' => $productData['slug']],
                 $productData
             );
-            
+
             // Associate categories with the product
             $categoryIds = [];
             foreach ($categories as $categorySlug) {
@@ -236,7 +235,7 @@ class DatabaseSeeder extends Seeder
                     $categoryIds[] = $category->id;
                 }
             }
-            
+
             $product->categories()->sync($categoryIds);
         }
     }

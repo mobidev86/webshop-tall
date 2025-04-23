@@ -8,8 +8,6 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class OrdersRelationManager extends RelationManager
 {
@@ -26,7 +24,7 @@ class OrdersRelationManager extends RelationManager
                     ->disabled()
                     ->dehydrated()
                     ->required(),
-                
+
                 Forms\Components\Select::make('status')
                     ->options([
                         Order::STATUS_PENDING => 'Pending',
@@ -37,7 +35,7 @@ class OrdersRelationManager extends RelationManager
                     ])
                     ->default(Order::STATUS_PENDING)
                     ->required(),
-                
+
                 Forms\Components\TextInput::make('total_amount')
                     ->numeric()
                     ->prefix('$')
@@ -53,7 +51,7 @@ class OrdersRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('order_number')
                     ->searchable()
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
@@ -66,11 +64,11 @@ class OrdersRelationManager extends RelationManager
                     })
                     ->formatStateUsing(fn (string $state): string => ucfirst($state))
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('total_amount')
                     ->money('USD')
                     ->sortable(),
-                
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
@@ -90,6 +88,7 @@ class OrdersRelationManager extends RelationManager
                     ->mutateFormDataUsing(function (array $data): array {
                         // Automatically set the user_id to the current record's ID
                         $data['user_id'] = $this->ownerRecord->id;
+
                         return $data;
                     }),
             ])
@@ -104,4 +103,4 @@ class OrdersRelationManager extends RelationManager
             ])
             ->defaultSort('created_at', 'desc');
     }
-} 
+}

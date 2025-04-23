@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\ShopController;
+use App\Http\Middleware\CustomerAccessMiddleware;
 use App\Livewire\Customer\Dashboard as CustomerDashboard;
-use App\Livewire\Customer\OrderManagement;
 use App\Livewire\Customer\OrderDetail;
+use App\Livewire\Customer\OrderManagement;
 use App\Livewire\Customer\ProfileManagement;
 use Illuminate\Support\Facades\Route;
-use App\Http\Middleware\CustomerAccessMiddleware;
 
 // Make shop the default homepage
 Route::get('/', [ShopController::class, 'index'])->name('shop.index');
@@ -36,4 +36,4 @@ Route::view('profile', 'profile')
     ->middleware(\App\Http\Middleware\AdminProfileRestrictMiddleware::class)
     ->name('profile');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

@@ -1,0 +1,14 @@
+includes:
+    - ./vendor/nunomaduro/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - config
+        - database
+        - routes
+    level: 5
+    excludePaths:
+        - ./vendor
+    ignoreErrors:
+        # Add specific error patterns to ignore here if needed 
