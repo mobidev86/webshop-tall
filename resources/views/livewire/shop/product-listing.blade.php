@@ -15,14 +15,15 @@
                             </svg>
                         </div>
                         <input 
-                            wire:model.live.debounce.300ms="search" 
+                            wire:model.live.debounce.150ms="search" 
                             type="text" 
                             class="block w-full rounded-md border-0 py-3 pl-11 pr-20 text-gray-900 ring-1 ring-inset ring-gray-200 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-slate-600 sm:text-md shadow-sm"
                             placeholder="{{ $searchPlaceholder }}"
+                            autocomplete="off"
                         >
                         <!-- Search indicator -->
                         <div class="absolute inset-y-0 right-0 left-auto flex items-center pr-3">
-                            <div wire:loading.delay wire:target="search">
+                            <div wire:loading wire:target="search">
                                 <svg class="animate-spin h-5 w-5 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -42,22 +43,44 @@
                     @if($search)
                         <div class="mt-2 text-sm text-gray-600 text-center">
                             Searching for: <span class="font-medium">{{ $search }}</span>
+                            <span wire:loading wire:target="search" class="ml-1 text-slate-600">(searching...)</span>
                         </div>
                     @endif
                 </div>
                 
                 <!-- Filters control bar -->
                 <div class="flex flex-wrap items-center justify-between border-b border-gray-200 pb-6">
-                    <div class="flex items-center space-x-4">
+                    <div class="flex items-center flex-wrap gap-3">
                         <button 
                             wire:click="resetFilters" 
                             class="text-sm text-slate-600 hover:text-slate-800 flex items-center space-x-1 transition duration-150"
+                            wire:loading.class="opacity-50 cursor-wait"
+                            wire:target="resetFilters"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
                             <span>Reset Filters</span>
                         </button>
+                        
+                        <!-- Show selected category badge -->
+                        @if($selectedCategory)
+                            <div class="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 text-slate-800 text-xs font-medium rounded-full">
+                                <span>
+                                    {{ $categories->firstWhere('id', $selectedCategory)->name }}
+                                </span>
+                                <button 
+                                    wire:click="clearCategory" 
+                                    class="text-slate-600 hover:text-slate-800"
+                                    wire:loading.class="opacity-50"
+                                    wire:target="clearCategory"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        @endif
                     </div>
                     
                     <div class="flex items-center space-x-4">
@@ -70,7 +93,11 @@
                             </select>
                         </div>
                         
-                        <button wire:click="$set('sortDirection', '{{ $sortDirection === 'asc' ? 'desc' : 'asc' }}')" type="button" class="p-1.5 text-gray-600 hover:text-gray-800 bg-white rounded-md border border-gray-200 shadow-sm transition duration-150 hover:border-gray-300">
+                        <button 
+                            wire:click="$set('sortDirection', '{{ $sortDirection === 'asc' ? 'desc' : 'asc' }}')" 
+                            type="button" 
+                            class="p-1.5 text-gray-600 hover:text-gray-800 bg-white rounded-md border border-gray-200 shadow-sm transition duration-150 hover:border-gray-300"
+                        >
                             @if($sortDirection === 'asc')
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
@@ -90,14 +117,22 @@
                     <!-- Filters sidebar -->
                     <div class="lg:col-span-1">
                         <div class="sticky top-6 bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
-                            <div class="bg-slate-50 px-6 py-4 border-b border-gray-100">
+                            <div class="bg-slate-50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                                 <h3 class="text-lg font-medium text-gray-900">Categories</h3>
+                                <div wire:loading wire:target="selectedCategory, clearCategory, selectCategory" class="text-xs text-slate-600">
+                                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                </div>
                             </div>
                             <ul class="p-4 space-y-1.5">
                                 <li wire:key="category-all">
                                     <button 
                                         wire:click="clearCategory" 
                                         class="flex items-center w-full py-2 px-3 rounded-md transition-colors duration-150 {{ !$selectedCategory ? 'bg-slate-100 text-slate-900 font-medium' : 'text-gray-700 hover:bg-gray-50' }}"
+                                        wire:loading.class="opacity-50 cursor-wait"
+                                        wire:target="clearCategory"
                                     >
                                         All Categories
                                     </button>
@@ -107,6 +142,8 @@
                                         <button 
                                             wire:click="selectCategory({{ $category->id }})" 
                                             class="flex items-center justify-between w-full py-2 px-3 rounded-md transition-colors duration-150 {{ $selectedCategory == $category->id ? 'bg-slate-100 text-slate-900 font-medium' : 'text-gray-700 hover:bg-gray-50' }}"
+                                            wire:loading.class="opacity-50 cursor-wait"
+                                            wire:target="selectCategory({{ $category->id }})"
                                         >
                                             <span>{{ $category->name }}</span>
                                             @if($category->products_count)
@@ -122,7 +159,7 @@
                     <!-- Product grid -->
                     <div class="lg:col-span-4">
                         <!-- Loading indicator for the entire grid -->
-                        <div wire:loading.delay class="w-full">
+                        <div wire:loading.delay wire:target="search, selectedCategory, sortBy, sortDirection, resetFilters, clearCategory, selectCategory" class="w-full">
                             <div class="flex justify-center items-center py-16">
                                 <svg class="animate-spin h-10 w-10 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -131,7 +168,8 @@
                             </div>
                         </div>
                         
-                        <div wire:loading.delay.remove>
+                        <!-- Product grid content -->
+                        <div wire:loading.delay.remove wire:target="search, selectedCategory, sortBy, sortDirection, resetFilters, clearCategory, selectCategory">
                             @if($products->count())
                                 <div class="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-10">
                                     @foreach($products as $product)
@@ -214,14 +252,16 @@
                                         <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
                                     </svg>
                                     <h3 class="mt-3 text-lg font-medium text-gray-900 font-serif">{{ $noResultsMessage }}</h3>
-                                    <div class="mt-8 flex justify-center space-x-4">
-                                        <button 
-                                            type="button" 
-                                            wire:click="$set('search', '')" 
-                                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
-                                        >
-                                            Reset Search
-                                        </button>
+                                    <div class="mt-8 flex flex-wrap justify-center gap-3">
+                                        @if($search)
+                                            <button 
+                                                type="button" 
+                                                wire:click="$set('search', '')" 
+                                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-slate-800 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500"
+                                            >
+                                                Reset Search
+                                            </button>
+                                        @endif
                                         
                                         @if($selectedCategory)
                                             <button 
@@ -231,6 +271,12 @@
                                             >
                                                 Clear Category Filter
                                             </button>
+                                        @endif
+                                        
+                                        @if(!$search && !$selectedCategory)
+                                            <div class="text-sm text-gray-600">
+                                                Try adjusting your search or filters to find products.
+                                            </div>
                                         @endif
                                     </div>
                                 </div>

@@ -15,16 +15,17 @@ class ProductListing extends Component
 {
     use WithPagination;
     
-    #[Url]
+    // Removing Url attribute to make search work through AJAX without URL parameters
     public string $search = '';
     
     /**
      * Selected category ID (integer) or null for all categories
      * @var int|null
      */
-    #[Url]
+    // Removing Url attribute to make category filter work through AJAX without URL parameters
     public ?int $selectedCategory = null;
     
+    // Keep Url attributes for sorting since they're less frequently changed
     #[Url]
     public string $sortBy = 'name';
     
@@ -33,6 +34,8 @@ class ProductListing extends Component
     
     public int $perPage = 12;
     public string $searchPlaceholder = 'Search by product name, description, or category...';
+    public bool $isSearching = false;
+    public bool $isFilteringCategory = false;
     
     /**
      * Initialize the component
@@ -71,17 +74,25 @@ class ProductListing extends Component
     
     public function updatingSearch(): void
     {
+        $this->isSearching = true;
         $this->resetPage();
     }
     
-    public function updatingSelectedCategory($value): void
+    public function updatedSearch(): void
     {
-        // Ensure empty string is treated as null
-        if ($value === '') {
-            $this->selectedCategory = null;
-        }
-        
+        $this->isSearching = false;
+    }
+    
+    public function updatingSelectedCategory(): void
+    {
+        // Set filtering flag for UI feedback
+        $this->isFilteringCategory = true;
         $this->resetPage();
+    }
+    
+    public function updatedSelectedCategory(): void
+    {
+        $this->isFilteringCategory = false;
     }
     
     public function sortBy(string $field): void
@@ -144,8 +155,8 @@ class ProductListing extends Component
         $query = Product::query()
             ->where('is_active', true);
             
-        // Apply search filter
-        if ($this->search) {
+        // Apply search filter (no min character limit)
+        if ($this->search !== '') {
             $searchTerm = '%' . $this->search . '%';
             
             $query->where(function (Builder $query) use ($searchTerm) {
@@ -237,9 +248,7 @@ class ProductListing extends Component
         // Reset all filterable properties
         $this->reset(['selectedCategory', 'search', 'sortBy', 'sortDirection']);
         $this->resetPage();
-        
-        // Force a complete component refresh
-        return redirect()->to(request()->header('Referer'));
+        // No redirect needed for AJAX operation
     }
     
     public function render()
