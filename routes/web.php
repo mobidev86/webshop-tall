@@ -32,7 +32,8 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::view('profile', 'profile')
-    ->middleware(['auth'])
+    ->middleware('auth')
+    ->middleware(\App\Http\Middleware\AdminProfileRestrictMiddleware::class)
     ->name('profile');
 
 require __DIR__.'/auth.php';
