@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Log;
 
 class OrderResource extends Resource
 {
@@ -60,9 +61,10 @@ class OrderResource extends Resource
                                 // If order was cancelled, restore product stock
                                 if ($record && $state === Order::STATUS_CANCELLED && $record->status !== Order::STATUS_CANCELLED) {
                                     foreach ($record->items as $item) {
-                                        if ($item->product) {
-                                            $item->product->stock += $item->quantity;
-                                            $item->product->save();
+                                        $product = $item->product;
+                                        if ($product instanceof Product) {
+                                            $product->stock += $item->quantity;
+                                            $product->save();
                                         }
                                     }
                                 }
@@ -94,15 +96,15 @@ class OrderResource extends Resource
                                     ->reactive()
                                     ->afterStateUpdated(function (callable $set, $state, $livewire) {
                                         if ($state) {
-                                            $product = Product::find($state);
-                                            if ($product) {
+                                            $productResult = Product::find($state);
+                                            if ($productResult instanceof Product) {
                                                 // Get the current price from the product
-                                                $price = (float) $product->getCurrentPrice();
+                                                $price = (float) $productResult->getCurrentPrice();
 
                                                 // Set the product details in the form
-                                                $set('product_name', $product->name);
+                                                $set('product_name', $productResult->name);
                                                 $set('price', $price);
-                                                $set('available_stock', $product->stock);
+                                                $set('available_stock', $productResult->stock);
 
                                                 // Set the initial quantity
                                                 $quantity = 1; // Default quantity
@@ -156,10 +158,10 @@ class OrderResource extends Resource
                                         // Validate against available stock
                                         $productId = $get('product_id');
                                         if ($productId) {
-                                            $product = Product::find($productId);
-                                            if ($product && $quantity > $product->stock) {
+                                            $productResult = Product::find($productId);
+                                            if ($productResult instanceof Product && $quantity > $productResult->stock) {
                                                 // Adjust quantity to available stock
-                                                $quantity = $product->stock;
+                                                $quantity = $productResult->stock;
                                                 $set('quantity', $quantity);
 
                                                 // Recalculate subtotal
@@ -222,6 +224,7 @@ class OrderResource extends Resource
                         Order::STATUS_COMPLETED => 'success',
                         Order::STATUS_DECLINED => 'warning',
                         Order::STATUS_CANCELLED => 'danger',
+                        default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => ucfirst($state))
                     ->sortable(),
@@ -283,9 +286,10 @@ class OrderResource extends Resource
                     ->before(function (Order $record) {
                         // If deleting order, restore stock for all its items
                         foreach ($record->items as $item) {
-                            if ($item->product) {
-                                $item->product->stock += $item->quantity;
-                                $item->product->save();
+                            $product = $item->product;
+                            if ($product instanceof Product) {
+                                $product->stock += $item->quantity;
+                                $product->save();
                             }
                         }
                     }),
@@ -297,9 +301,10 @@ class OrderResource extends Resource
                             // Restore stock for all deleted orders
                             foreach ($records as $record) {
                                 foreach ($record->items as $item) {
-                                    if ($item->product) {
-                                        $item->product->stock += $item->quantity;
-                                        $item->product->save();
+                                    $product = $item->product;
+                                    if ($product instanceof Product) {
+                                        $product->stock += $item->quantity;
+                                        $product->save();
                                     }
                                 }
                             }

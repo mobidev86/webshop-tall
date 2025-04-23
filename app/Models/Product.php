@@ -10,10 +10,31 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property string|null $features
+ * @property float $price
+ * @property float|null $sale_price
+ * @property int $stock
+ * @property string|null $sku
+ * @property bool $is_active
+ * @property bool $is_featured
+ * @property string|null $image
+ * @property string|null $image_url
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ */
 class Product extends Model
 {
+    /** @use HasFactory<\Database\Factories\ProductFactory> */
     use HasFactory;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'name',
         'slug',
@@ -28,6 +49,9 @@ class Product extends Model
         'image',
     ];
 
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
         'price' => 'decimal:2',
         'sale_price' => 'decimal:2',
@@ -50,6 +74,8 @@ class Product extends Model
 
     /**
      * Relationship with categories (BelongsToMany)
+     * 
+     * @return BelongsToMany<Category>
      */
     public function categories(): BelongsToMany
     {
@@ -58,6 +84,8 @@ class Product extends Model
 
     /**
      * Relationship with order items
+     * 
+     * @return HasMany<OrderItem>
      */
     public function orderItems(): HasMany
     {
@@ -109,6 +137,9 @@ class Product extends Model
 
     /**
      * Scope for active products
+     * 
+     * @param Builder<Product> $query
+     * @return Builder<Product>
      */
     public function scopeActive(Builder $query): Builder
     {
@@ -117,6 +148,9 @@ class Product extends Model
 
     /**
      * Scope for featured products
+     * 
+     * @param Builder<Product> $query
+     * @return Builder<Product>
      */
     public function scopeFeatured(Builder $query): Builder
     {
@@ -125,6 +159,9 @@ class Product extends Model
 
     /**
      * Scope for products on sale
+     * 
+     * @param Builder<Product> $query
+     * @return Builder<Product>
      */
     public function scopeOnSale(Builder $query): Builder
     {
@@ -134,6 +171,9 @@ class Product extends Model
 
     /**
      * Scope for products in stock
+     * 
+     * @param Builder<Product> $query
+     * @return Builder<Product>
      */
     public function scopeInStock(Builder $query): Builder
     {
@@ -142,6 +182,10 @@ class Product extends Model
 
     /**
      * Scope for products in a specific category
+     * 
+     * @param Builder<Product> $query
+     * @param int $categoryId
+     * @return Builder<Product>
      */
     public function scopeInCategory(Builder $query, int $categoryId): Builder
     {
@@ -161,8 +205,8 @@ class Product extends Model
     /**
      * Get related products in the same categories
      *
-     * @param  int  $limit  Maximum number of related products to return
-     * @return Collection Related products
+     * @param int $limit Maximum number of related products to return
+     * @return Collection<int, Product> Related products
      */
     public function getRelatedProducts(int $limit = 4): Collection
     {
@@ -190,9 +234,9 @@ class Product extends Model
     /**
      * Get featured products with caching
      *
-     * @param  int  $limit  Maximum number of featured products to return
-     * @param  bool  $inStockOnly  Whether to show only in-stock products
-     * @return Collection Featured products
+     * @param int $limit Maximum number of featured products to return
+     * @param bool $inStockOnly Whether to show only in-stock products
+     * @return Collection<int, Product> Featured products
      */
     public static function getFeaturedProducts(int $limit = 6, bool $inStockOnly = true): Collection
     {
@@ -215,8 +259,8 @@ class Product extends Model
     /**
      * Get products on sale with caching
      *
-     * @param  int  $limit  Maximum number of sale products to return
-     * @return Collection Products on sale
+     * @param int $limit Maximum number of sale products to return
+     * @return Collection<int, Product> Products on sale
      */
     public static function getOnSaleProducts(int $limit = 8): Collection
     {
@@ -234,8 +278,8 @@ class Product extends Model
     /**
      * Get newest products with caching
      *
-     * @param  int  $limit  Maximum number of products to return
-     * @return Collection Newest products
+     * @param int $limit Maximum number of products to return
+     * @return Collection<int, Product> Newest products
      */
     public static function getNewestProducts(int $limit = 8): Collection
     {

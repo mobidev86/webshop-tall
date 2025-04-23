@@ -2,14 +2,44 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @property int $id
+ * @property string $order_number
+ * @property int $user_id
+ * @property string $status
+ * @property float $total_amount
+ * @property string|null $payment_method
+ * @property string|null $shipping_method
+ * @property string|null $notes
+ * @property string|null $shipping_name
+ * @property string|null $shipping_email
+ * @property string|null $shipping_phone
+ * @property string|null $shipping_address
+ * @property string|null $shipping_city
+ * @property string|null $shipping_state
+ * @property string|null $shipping_zip
+ * @property string|null $shipping_country
+ * @property string|null $billing_name
+ * @property string|null $billing_email
+ * @property string|null $billing_phone
+ * @property string|null $billing_address
+ * @property string|null $billing_city
+ * @property string|null $billing_state
+ * @property string|null $billing_zip
+ * @property string|null $billing_country
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ */
 class Order extends Model
 {
+    /** @use HasFactory<\Database\Factories\OrderFactory> */
     use HasFactory;
 
     // Order status constants
@@ -42,6 +72,9 @@ class Order extends Model
         self::STATUS_PROCESSING,
     ];
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'order_number',
         'user_id',
@@ -70,6 +103,9 @@ class Order extends Model
         'billing_country',
     ];
 
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
         'total_amount' => 'float',
         'created_at' => 'datetime',
@@ -90,6 +126,8 @@ class Order extends Model
 
     /**
      * Relationship with user
+     * 
+     * @return BelongsTo<User, Order>
      */
     public function user(): BelongsTo
     {
@@ -98,6 +136,8 @@ class Order extends Model
 
     /**
      * Relationship with order items
+     * 
+     * @return HasMany<OrderItem>
      */
     public function items(): HasMany
     {
@@ -156,8 +196,9 @@ class Order extends Model
 
             // Restore product stock
             foreach ($this->items as $item) {
-                if ($item->product) {
-                    $item->product->increment('stock', $item->quantity);
+                $product = $item->product;
+                if ($product !== null) {
+                    $product->increment('stock', $item->quantity);
                 }
             }
         });
@@ -207,16 +248,24 @@ class Order extends Model
 
     /**
      * Scope for finding orders by status
+     * 
+     * @param Builder<Order> $query
+     * @param string $status
+     * @return Builder<Order>
      */
-    public function scopeWithStatus($query, string $status)
+    public function scopeWithStatus(Builder $query, string $status): Builder
     {
         return $query->where('status', $status);
     }
 
     /**
      * Scope for finding orders by user
+     * 
+     * @param Builder<Order> $query
+     * @param int $userId
+     * @return Builder<Order>
      */
-    public function scopeForUser($query, int $userId)
+    public function scopeForUser(Builder $query, int $userId): Builder
     {
         return $query->where('user_id', $userId);
     }

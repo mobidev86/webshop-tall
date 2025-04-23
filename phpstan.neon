@@ -1,5 +1,6 @@
 includes:
     - ./vendor/nunomaduro/larastan/extension.neon
+    - ./phpstan-baseline.neon
 
 parameters:
     paths:
@@ -7,7 +8,7 @@ parameters:
         - config
         - database
         - routes
-    level: 5
+    level: 9
     excludePaths:
         - ./vendor
     ignoreErrors:

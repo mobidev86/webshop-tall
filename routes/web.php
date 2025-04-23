@@ -6,6 +6,7 @@ use App\Livewire\Customer\Dashboard as CustomerDashboard;
 use App\Livewire\Customer\OrderDetail;
 use App\Livewire\Customer\OrderManagement;
 use App\Livewire\Customer\ProfileManagement;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 // Make shop the default homepage
@@ -23,7 +24,13 @@ Route::middleware(['auth', 'verified', CustomerAccessMiddleware::class])->group(
 // Default dashboard route - will redirect to appropriate dashboard based on role
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
-        if (auth()->user()->role === 'admin') {
+        $user = auth()->user();
+        
+        if (!$user) {
+            return redirect()->route('login');
+        }
+        
+        if ($user->role === User::ROLE_ADMIN) {
             return redirect()->route('filament.admin.pages.dashboard');
         } else {
             return redirect()->route('customer.dashboard');

@@ -11,10 +11,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $slug
+ * @property string|null $description
+ * @property int|null $parent_id
+ * @property bool $is_active
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ */
 class Category extends Model
 {
+    /** @use HasFactory<\Database\Factories\CategoryFactory> */
     use HasFactory;
 
+    /**
+     * @var array<int, string>
+     */
     protected $fillable = [
         'name',
         'slug',
@@ -23,6 +37,9 @@ class Category extends Model
         'is_active',
     ];
 
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
         'is_active' => 'boolean',
         'parent_id' => 'integer',
@@ -30,6 +47,8 @@ class Category extends Model
 
     /**
      * Relationship with parent category
+     * 
+     * @return BelongsTo<Category, Category>
      */
     public function parent(): BelongsTo
     {
@@ -38,6 +57,8 @@ class Category extends Model
 
     /**
      * Relationship with child categories
+     * 
+     * @return HasMany<Category>
      */
     public function children(): HasMany
     {
@@ -46,6 +67,8 @@ class Category extends Model
 
     /**
      * Relationship with products (BelongsToMany)
+     * 
+     * @return BelongsToMany<Product>
      */
     public function products(): BelongsToMany
     {
@@ -54,6 +77,8 @@ class Category extends Model
 
     /**
      * Helper method to get all active categories
+     * 
+     * @return Collection<int, Category>
      */
     public static function getActive(): Collection
     {
@@ -65,7 +90,8 @@ class Category extends Model
     /**
      * Get all descendants (nested subcategories) recursively
      *
-     * @param  bool  $activeOnly  Filter only active categories
+     * @param bool $activeOnly Filter only active categories
+     * @return Collection<int, Category>
      */
     public function getAllDescendants(bool $activeOnly = false): Collection
     {
@@ -94,7 +120,8 @@ class Category extends Model
     /**
      * Get all ancestors (parent chain) recursively
      *
-     * @param  bool  $activeOnly  Filter only active categories
+     * @param bool $activeOnly Filter only active categories
+     * @return Collection<int, Category>
      */
     public function getAllAncestors(bool $activeOnly = false): Collection
     {
@@ -128,7 +155,8 @@ class Category extends Model
      * Get nested tree hierarchy of the category with its descendants
      * Returns an array with the category and a 'children' key containing subcategories
      *
-     * @param  bool  $activeOnly  Filter only active categories
+     * @param bool $activeOnly Filter only active categories
+     * @return array<string, mixed>
      */
     public function getNestedTree(bool $activeOnly = false): array
     {
@@ -153,7 +181,8 @@ class Category extends Model
     /**
      * Get all root categories (categories without parents)
      *
-     * @param  bool  $activeOnly  Filter only active categories
+     * @param bool $activeOnly Filter only active categories
+     * @return Collection<int, Category>
      */
     public static function getRootCategories(bool $activeOnly = false): Collection
     {
@@ -172,6 +201,9 @@ class Category extends Model
 
     /**
      * Scope query to only include active categories
+     * 
+     * @param Builder<Category> $query
+     * @return Builder<Category>
      */
     public function scopeActive(Builder $query): Builder
     {
@@ -180,6 +212,9 @@ class Category extends Model
 
     /**
      * Scope query to only include root categories
+     * 
+     * @param Builder<Category> $query
+     * @return Builder<Category>
      */
     public function scopeRoot(Builder $query): Builder
     {
@@ -207,7 +242,7 @@ class Category extends Model
      */
     public static function bootCategory(): void
     {
-        static::saved(function ($category) {
+        static::saved(function (Category $category) {
             Cache::forget("category-{$category->id}-descendants");
             Cache::forget("category-{$category->id}-descendants-active");
             Cache::forget("category-{$category->id}-ancestors");
@@ -219,7 +254,7 @@ class Category extends Model
             Cache::forget('categories-active');
         });
 
-        static::deleted(function ($category) {
+        static::deleted(function (Category $category) {
             Cache::forget("category-{$category->id}-descendants");
             Cache::forget("category-{$category->id}-descendants-active");
             Cache::forget("category-{$category->id}-ancestors");

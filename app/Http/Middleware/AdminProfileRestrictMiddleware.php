@@ -13,8 +13,10 @@ class AdminProfileRestrictMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        $user = auth()->user();
+        
         // Check if user is authenticated and has admin role
-        if (auth()->check() && auth()->user()->isAdmin()) {
+        if ($user && $user->isAdmin()) {
             return redirect()->route('filament.admin.pages.dashboard')
                 ->with('error', 'Admin users cannot access the profile page.');
         }

@@ -114,36 +114,46 @@ class DatabaseSeeder extends Seeder
         }
 
         // Create sub-categories
-        $subCategories = [
-            [
+        $electronicsCategory = Category::where('slug', 'electronics')->first();
+        $clothingCategory = Category::where('slug', 'clothing')->first();
+        
+        $subCategories = [];
+        
+        if ($electronicsCategory) {
+            $subCategories[] = [
                 'name' => 'Smartphones',
                 'slug' => 'smartphones',
                 'description' => 'Mobile phones and accessories',
-                'parent_id' => Category::where('slug', 'electronics')->first()->id,
+                'parent_id' => $electronicsCategory->id,
                 'is_active' => true,
-            ],
-            [
+            ];
+            
+            $subCategories[] = [
                 'name' => 'Laptops',
                 'slug' => 'laptops',
                 'description' => 'Notebooks and laptops',
-                'parent_id' => Category::where('slug', 'electronics')->first()->id,
+                'parent_id' => $electronicsCategory->id,
                 'is_active' => true,
-            ],
-            [
+            ];
+        }
+        
+        if ($clothingCategory) {
+            $subCategories[] = [
                 'name' => 'Men\'s Clothing',
                 'slug' => 'mens-clothing',
                 'description' => 'Clothing for men',
-                'parent_id' => Category::where('slug', 'clothing')->first()->id,
+                'parent_id' => $clothingCategory->id,
                 'is_active' => true,
-            ],
-            [
+            ];
+            
+            $subCategories[] = [
                 'name' => 'Women\'s Clothing',
                 'slug' => 'womens-clothing',
                 'description' => 'Clothing for women',
-                'parent_id' => Category::where('slug', 'clothing')->first()->id,
+                'parent_id' => $clothingCategory->id,
                 'is_active' => true,
-            ],
-        ];
+            ];
+        }
 
         foreach ($subCategories as $categoryData) {
             Category::firstOrCreate(
@@ -236,7 +246,9 @@ class DatabaseSeeder extends Seeder
                 }
             }
 
-            $product->categories()->sync($categoryIds);
+            if (!empty($categoryIds)) {
+                $product->categories()->sync($categoryIds);
+            }
         }
     }
 }

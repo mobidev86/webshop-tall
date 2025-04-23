@@ -33,6 +33,9 @@ class AdminResource extends Resource
         return 'Administrators';
     }
 
+    /**
+     * @return Builder<User>
+     */
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('role', User::ROLE_ADMIN);

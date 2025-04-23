@@ -15,18 +15,26 @@ class CustomerAccessMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if user is authenticated and has customer role
-        if (Auth::check() && Auth::user()->role === User::ROLE_CUSTOMER) {
+        $user = Auth::user();
+        
+        // If not authenticated
+        if (!$user) {
+            return redirect()->route('login')->with('error', 'Please login to access the customer area.');
+        }
+        
+        // Check if user has customer role
+        if ($user->role === User::ROLE_CUSTOMER) {
             return $next($request);
         }
 
-        // If not customer, redirect with error message
-        if (Auth::check() && Auth::user()->role === User::ROLE_ADMIN) {
-            // For admin users, redirect to admin dashboard
-            return redirect()->route('filament.admin.pages.dashboard')->with('error', 'Admin users cannot access the customer dashboard.');
+        // For admin users, redirect to admin dashboard
+        if ($user->role === User::ROLE_ADMIN) {
+            return redirect()->route('filament.admin.pages.dashboard')
+                ->with('error', 'Admin users cannot access the customer dashboard.');
         }
 
-        // For other users or guests
-        return redirect()->route('shop.index')->with('error', 'You do not have permission to access the customer area.');
+        // For other users with invalid roles
+        return redirect()->route('shop.index')
+            ->with('error', 'You do not have permission to access the customer area.');
     }
 }
