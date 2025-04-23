@@ -39,6 +39,7 @@ class User extends Authenticatable
         'role',
         'phone',
         'is_active',
+        'is_temporary',
         'address',
         'city',
         'state',
@@ -65,6 +66,7 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
         'is_active' => 'boolean',
+        'is_temporary' => 'boolean',
     ];
 
     /**

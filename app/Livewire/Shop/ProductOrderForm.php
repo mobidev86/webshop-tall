@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
+use Illuminate\Support\Str;
 
 class ProductOrderForm extends Component
 {
@@ -209,32 +210,45 @@ class ProductOrderForm extends Component
         // Check if this email belongs to an existing user
         $existingUser = User::where('email', $this->guestEmail)->first();
         
+        // Create a temporary user if the email doesn't exist
+        if (!$existingUser) {
+            $tempPassword = "password";
+            $existingUser = User::create([
+                'name' => 'Guest User',
+                'email' => $this->guestEmail,
+                'password' => bcrypt($tempPassword),
+                'role' => User::ROLE_CUSTOMER,
+                'is_temporary' => true,
+                'is_active' => true,
+            ]);
+        }
+        
         return Order::create([
-            // Link to existing user if email matches
-            'user_id' => $existingUser ? $existingUser->id : null,
+            // Link to existing or newly created temporary user
+            'user_id' => $existingUser->id,
             'order_number' => Order::generateOrderNumber(),
             'status' => Order::STATUS_PENDING,
             'total_amount' => $product->getCurrentPrice() * $this->quantity,
             
             // Set email (and minimal shipping info)
             'shipping_email' => $this->guestEmail,
-            'shipping_name' => $existingUser ? $existingUser->name : '',
-            'shipping_phone' => $existingUser ? ($existingUser->phone ?? '') : '',
-            'shipping_address' => $existingUser ? ($existingUser->address ?? '') : '',
-            'shipping_city' => $existingUser ? ($existingUser->city ?? '') : '',
-            'shipping_state' => $existingUser ? ($existingUser->state ?? '') : '',
-            'shipping_zip' => $existingUser ? ($existingUser->zip_code ?? '') : '',
-            'shipping_country' => $existingUser ? ($existingUser->country ?? '') : '',
+            'shipping_name' => $existingUser->name,
+            'shipping_phone' => $existingUser->phone ?? '',
+            'shipping_address' => $existingUser->address ?? '',
+            'shipping_city' => $existingUser->city ?? '',
+            'shipping_state' => $existingUser->state ?? '',
+            'shipping_zip' => $existingUser->zip_code ?? '',
+            'shipping_country' => $existingUser->country ?? '',
             
             // Set billing to match shipping
             'billing_email' => $this->guestEmail,
-            'billing_name' => $existingUser ? $existingUser->name : '',
-            'billing_phone' => $existingUser ? ($existingUser->phone ?? '') : '',
-            'billing_address' => $existingUser ? ($existingUser->address ?? '') : '',
-            'billing_city' => $existingUser ? ($existingUser->city ?? '') : '',
-            'billing_state' => $existingUser ? ($existingUser->state ?? '') : '',
-            'billing_zip' => $existingUser ? ($existingUser->zip_code ?? '') : '',
-            'billing_country' => $existingUser ? ($existingUser->country ?? '') : '',
+            'billing_name' => $existingUser->name,
+            'billing_phone' => $existingUser->phone ?? '',
+            'billing_address' => $existingUser->address ?? '',
+            'billing_city' => $existingUser->city ?? '',
+            'billing_state' => $existingUser->state ?? '',
+            'billing_zip' => $existingUser->zip_code ?? '',
+            'billing_country' => $existingUser->country ?? '',
         ]);
     }
     

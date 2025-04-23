@@ -272,6 +272,12 @@
                     <h3 class="text-sm font-medium text-green-800">Order placed successfully!</h3>
                     <div class="mt-2 text-sm text-green-700">
                         <p>Your order #{{ $orderNumber }} has been placed. We've sent a confirmation to your email.</p>
+                        @if(!Auth::check())
+                            <p class="mt-2">
+                                A temporary account has been created for you. You can <a href="{{ route('login') }}" class="font-medium underline hover:text-green-900">login</a> 
+                                with your email to track your order in the future.
+                            </p>
+                        @endif
                     </div>
                 </div>
             </div>
