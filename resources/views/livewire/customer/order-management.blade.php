@@ -4,6 +4,39 @@
             <div class="p-6">
                 <h2 class="text-2xl font-semibold text-gray-800 mb-6">My Orders</h2>
                 
+                <!-- Order Summary Card -->
+                <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4 flex flex-col">
+                        <span class="text-sm font-medium text-gray-500">Total Orders</span>
+                        <span class="text-2xl font-bold text-gray-800">{{ $totalOrdersCount }}</span>
+                    </div>
+                    
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg shadow-sm p-4 flex flex-col">
+                        <span class="text-sm font-medium text-gray-500">Pending</span>
+                        <span class="text-2xl font-bold text-gray-800">{{ $statusCounts['pending'] ?? 0 }}</span>
+                    </div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg shadow-sm p-4 flex flex-col">
+                        <span class="text-sm font-medium text-blue-500">Processing</span>
+                        <span class="text-2xl font-bold text-blue-800">{{ $statusCounts['processing'] ?? 0 }}</span>
+                    </div>
+                    
+                    <div class="bg-green-50 border border-green-200 rounded-lg shadow-sm p-4 flex flex-col">
+                        <span class="text-sm font-medium text-green-500">Completed</span>
+                        <span class="text-2xl font-bold text-green-800">{{ $statusCounts['completed'] ?? 0 }}</span>
+                    </div>
+                    
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg shadow-sm p-4 flex flex-col">
+                        <span class="text-sm font-medium text-yellow-600">Declined</span>
+                        <span class="text-2xl font-bold text-yellow-800">{{ $statusCounts['declined'] ?? 0 }}</span>
+                    </div>
+                    
+                    <div class="bg-red-50 border border-red-200 rounded-lg shadow-sm p-4 flex flex-col">
+                        <span class="text-sm font-medium text-red-500">Cancelled</span>
+                        <span class="text-2xl font-bold text-red-800">{{ $statusCounts['cancelled'] ?? 0 }}</span>
+                    </div>
+                </div>
+                
                 <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <!-- Search -->
                     <div class="relative md:w-64">
@@ -20,20 +53,104 @@
                         >
                     </div>
                     
-                    <!-- Status Filter -->
+                    <!-- Status Filter Dropdown -->
                     <div class="w-full md:w-auto">
-                        <select 
-                            wire:model.live="status" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2"
-                        >
-                            <option value="">All Statuses</option>
-                            @foreach($statuses as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </select>
+                        <div class="relative inline-block text-left w-full">
+                            <button type="button" 
+                                class="inline-flex w-full justify-between items-center gap-x-1.5 rounded-md bg-white px-3 py-2.5 text-sm font-medium text-gray-900 border border-gray-300 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                id="status-filter-button"
+                                aria-expanded="true"
+                                aria-haspopup="true"
+                                onclick="document.getElementById('status-filter-dropdown').classList.toggle('hidden')">
+                                <span class="flex items-center">
+                                    <span class="h-2.5 w-2.5 rounded-full mr-2
+                                        @if($status === '') bg-indigo-500
+                                        @elseif($status === 'pending') bg-gray-500
+                                        @elseif($status === 'processing') bg-blue-500
+                                        @elseif($status === 'completed') bg-green-500
+                                        @elseif($status === 'declined') bg-yellow-500
+                                        @elseif($status === 'cancelled') bg-red-500
+                                        @endif
+                                    "></span>
+                                    @if($status === '')
+                                        All Statuses ({{ $totalOrdersCount }})
+                                    @else
+                                        {{ ucfirst($status) }} ({{ $statusCounts[$status] ?? 0 }})
+                                    @endif
+                                </span>
+                                <svg class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <div class="absolute right-0 z-10 mt-2 w-full origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden"
+                                id="status-filter-dropdown">
+                                <div class="py-1">
+                                    <a wire:click="$set('status', '')" 
+                                        href="javascript:void(0)" 
+                                        class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-100 {{ $status === '' ? 'bg-gray-100 text-indigo-600 font-medium' : 'text-gray-700' }}"
+                                        onclick="document.getElementById('status-filter-dropdown').classList.add('hidden')">
+                                        <span class="flex items-center">
+                                            <span class="h-2 w-2 rounded-full bg-indigo-500 mr-2"></span>
+                                            All Statuses
+                                        </span>
+                                        <span class="text-xs text-gray-500">{{ $totalOrdersCount }}</span>
+                                    </a>
+                                    <a wire:click="$set('status', 'pending')" 
+                                        href="javascript:void(0)" 
+                                        class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-100 {{ $status === 'pending' ? 'bg-gray-100 text-gray-800 font-medium' : 'text-gray-700' }}"
+                                        onclick="document.getElementById('status-filter-dropdown').classList.add('hidden')">
+                                        <span class="flex items-center">
+                                            <span class="h-2 w-2 rounded-full bg-gray-500 mr-2"></span>
+                                            Pending
+                                        </span>
+                                        <span class="text-xs text-gray-500">{{ $statusCounts['pending'] ?? 0 }}</span>
+                                    </a>
+                                    <a wire:click="$set('status', 'processing')" 
+                                        href="javascript:void(0)" 
+                                        class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-100 {{ $status === 'processing' ? 'bg-gray-100 text-blue-600 font-medium' : 'text-gray-700' }}"
+                                        onclick="document.getElementById('status-filter-dropdown').classList.add('hidden')">
+                                        <span class="flex items-center">
+                                            <span class="h-2 w-2 rounded-full bg-blue-500 mr-2"></span>
+                                            Processing
+                                        </span>
+                                        <span class="text-xs text-gray-500">{{ $statusCounts['processing'] ?? 0 }}</span>
+                                    </a>
+                                    <a wire:click="$set('status', 'completed')" 
+                                        href="javascript:void(0)" 
+                                        class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-100 {{ $status === 'completed' ? 'bg-gray-100 text-green-600 font-medium' : 'text-gray-700' }}"
+                                        onclick="document.getElementById('status-filter-dropdown').classList.add('hidden')">
+                                        <span class="flex items-center">
+                                            <span class="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
+                                            Completed
+                                        </span>
+                                        <span class="text-xs text-gray-500">{{ $statusCounts['completed'] ?? 0 }}</span>
+                                    </a>
+                                    <a wire:click="$set('status', 'declined')" 
+                                        href="javascript:void(0)" 
+                                        class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-100 {{ $status === 'declined' ? 'bg-gray-100 text-yellow-600 font-medium' : 'text-gray-700' }}"
+                                        onclick="document.getElementById('status-filter-dropdown').classList.add('hidden')">
+                                        <span class="flex items-center">
+                                            <span class="h-2 w-2 rounded-full bg-yellow-500 mr-2"></span>
+                                            Declined
+                                        </span>
+                                        <span class="text-xs text-gray-500">{{ $statusCounts['declined'] ?? 0 }}</span>
+                                    </a>
+                                    <a wire:click="$set('status', 'cancelled')" 
+                                        href="javascript:void(0)" 
+                                        class="flex items-center justify-between px-4 py-2 text-sm hover:bg-gray-100 {{ $status === 'cancelled' ? 'bg-gray-100 text-red-600 font-medium' : 'text-gray-700' }}"
+                                        onclick="document.getElementById('status-filter-dropdown').classList.add('hidden')">
+                                        <span class="flex items-center">
+                                            <span class="h-2 w-2 rounded-full bg-red-500 mr-2"></span>
+                                            Cancelled
+                                        </span>
+                                        <span class="text-xs text-gray-500">{{ $statusCounts['cancelled'] ?? 0 }}</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
+
                 <!-- Orders Table -->
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
