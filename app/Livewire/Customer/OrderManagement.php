@@ -29,16 +29,28 @@ class OrderManagement extends Component
 
     protected $queryString = [
         'search' => ['except' => ''],
-        'status' => ['except' => ''],
     ];
+
+    protected $paginationTheme = 'tailwind';
+
+    public function mount()
+    {
+        // Initialize any default values here
+    }
+
+    public function updatedStatus()
+    {
+        $this->resetPage();
+    }
 
     public function updatingSearch()
     {
         $this->resetPage();
     }
 
-    public function updatingStatus()
+    public function setStatus($status)
     {
+        $this->status = $status;
         $this->resetPage();
     }
 
