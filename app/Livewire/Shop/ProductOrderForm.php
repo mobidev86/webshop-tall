@@ -319,25 +319,15 @@ class ProductOrderForm extends Component
             'status' => Order::STATUS_PENDING,
             'total_amount' => $product->getCurrentPrice() * $this->quantity,
 
-            // Set email (and minimal shipping info)
+            // Set minimal shipping info
             'shipping_email' => $this->guestEmail,
             'shipping_name' => $existingUser->name,
             'shipping_phone' => $existingUser->phone ?? '',
-            'shipping_address' => $existingUser->address ?? '',
-            'shipping_city' => $existingUser->city ?? '',
-            'shipping_state' => $existingUser->state ?? '',
-            'shipping_zip' => $existingUser->zip_code ?? '',
-            'shipping_country' => $existingUser->country ?? '',
 
-            // Set billing to match shipping
+            // Set minimal billing info
             'billing_email' => $this->guestEmail,
             'billing_name' => $existingUser->name,
             'billing_phone' => $existingUser->phone ?? '',
-            'billing_address' => $existingUser->address ?? '',
-            'billing_city' => $existingUser->city ?? '',
-            'billing_state' => $existingUser->state ?? '',
-            'billing_zip' => $existingUser->zip_code ?? '',
-            'billing_country' => $existingUser->country ?? '',
         ]);
 
         // Log in the newly created user
@@ -360,25 +350,15 @@ class ProductOrderForm extends Component
             'status' => Order::STATUS_PENDING,
             'total_amount' => $product->getCurrentPrice() * $this->quantity,
 
-            // Set shipping info from user
+            // Set minimal shipping info
             'shipping_name' => $user->name,
             'shipping_email' => $user->email,
             'shipping_phone' => $user->phone ?? '',
-            'shipping_address' => $user->address ?? '',
-            'shipping_city' => $user->city ?? '',
-            'shipping_state' => $user->state ?? '',
-            'shipping_zip' => $user->zip_code ?? '',
-            'shipping_country' => $user->country ?? '',
 
-            // Set billing info from user
+            // Set minimal billing info
             'billing_name' => $user->name,
             'billing_email' => $user->email,
             'billing_phone' => $user->phone ?? '',
-            'billing_address' => $user->address ?? '',
-            'billing_city' => $user->city ?? '',
-            'billing_state' => $user->state ?? '',
-            'billing_zip' => $user->zip_code ?? '',
-            'billing_country' => $user->country ?? '',
         ]);
     }
 

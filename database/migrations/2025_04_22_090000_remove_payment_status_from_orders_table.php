@@ -25,4 +25,4 @@ return new class extends Migration
             $table->enum('payment_status', ['pending', 'paid', 'failed'])->default('pending')->after('status');
         });
     }
-};
+}; 
